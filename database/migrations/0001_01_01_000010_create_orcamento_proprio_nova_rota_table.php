@@ -46,16 +46,24 @@ return new class extends Migration
             $table->decimal('valor_impostos', 10, 2)->default(0);
             $table->decimal('valor_final', 10, 2)->default(0);
             
-            $table->foreignId('grupo_imposto_id')->nullable()->constrained('grupos_impostos');
+
             $table->timestamps();
             
             $table->index('orcamento_id');
             $table->index('fornecedor_nome');
         });
+
+        Schema::table('orcamento_proprio_nova_rota', function (Blueprint $table) {
+            $table->foreignId('grupo_imposto_id')->nullable()->constrained('grupos_impostos');
+        });
     }
 
     public function down(): void
     {
+        Schema::table('orcamento_proprio_nova_rota', function (Blueprint $table) {
+            $table->dropConstrainedForeignId('grupo_imposto_id');
+        });
+
         Schema::dropIfExists('orcamento_proprio_nova_rota');
     }
 };
