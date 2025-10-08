@@ -1,0 +1,321 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+@source '../views/filament/**/*.blade.php';
+@source '../../public/js/**/*.js';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+/* Forçar inclusão das classes de ícones pequenos */
+@layer utilities {
+    .w-3 {
+        width: 0.75rem;
+    }
+    .h-3 {
+        height: 0.75rem;
+    }
+}
+
+/* Componentes de paginação usando CSS tradicional */
+.pagination-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #6b7280;
+    background-color: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    transition: all 0.2s;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.pagination-btn:hover {
+    background-color: #f9fafb;
+    color: #374151;
+}
+
+.pagination-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination-btn-active {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #ffffff;
+    background-color: #2563eb;
+    border: 1px solid #2563eb;
+    border-radius: 0.375rem;
+    transition: all 0.2s;
+    cursor: default;
+    text-decoration: none;
+}
+
+.pagination-btn-active:hover {
+    background-color: #1d4ed8;
+}
+
+/* Dark mode variants */
+@media (prefers-color-scheme: dark) {
+    .pagination-btn {
+        color: #9ca3af;
+        background-color: #1f2937;
+        border-color: #4b5563;
+    }
+    
+    .pagination-btn:hover {
+        background-color: #374151;
+        color: #d1d5db;
+    }
+    
+    .pagination-btn-active {
+        background-color: #3b82f6;
+        border-color: #3b82f6;
+    }
+    
+    .pagination-btn-active:hover {
+        background-color: #2563eb;
+    }
+}
+
+/* Estilos específicos para ícones do widget Omie */
+@layer components {
+    /* Forçar tamanho dos ícones SVG no widget */
+    .fi-wi svg.w-3,
+    [data-widget] svg.w-3,
+    .filament-widget svg.w-3 {
+        width: 0.75rem !important;
+        height: 0.75rem !important;
+    }
+    
+    .fi-wi svg.h-3,
+    [data-widget] svg.h-3,
+    .filament-widget svg.h-3 {
+        width: 0.75rem !important;
+        height: 0.75rem !important;
+    }
+    
+    /* Estilos específicos para heroicons */
+    .fi-wi svg[class*="heroicon"],
+    [data-widget] svg[class*="heroicon"],
+    .filament-widget svg[class*="heroicon"] {
+        width: 0.75rem !important;
+        height: 0.75rem !important;
+    }
+}
+
+/* Estilos personalizados para barra de rolagem discreta */
+@layer components {
+    /* Barra de rolagem personalizada para elementos nav */
+    nav {
+        /* Webkit browsers (Chrome, Safari, Edge) */
+        scrollbar-width: thin;
+        scrollbar-color: transparent transparent;
+        transition: scrollbar-color 0.3s ease;
+    }
+    
+    nav:hover {
+        scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+    }
+    
+    /* Webkit scrollbar styling */
+    nav::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    
+    nav::-webkit-scrollbar-track {
+        background: transparent;
+        border-radius: 10px;
+    }
+    
+    nav::-webkit-scrollbar-thumb {
+        background: transparent;
+        border-radius: 10px;
+        border: 2px solid transparent;
+        background-clip: content-box;
+        transition: background 0.3s ease;
+    }
+    
+    nav:hover::-webkit-scrollbar-thumb {
+        background: rgba(156, 163, 175, 0.5);
+        background-clip: content-box;
+    }
+    
+    nav::-webkit-scrollbar-thumb:hover {
+        background: rgba(107, 114, 128, 0.7);
+        background-clip: content-box;
+    }
+    
+    /* Estilo mais geral para barras de rolagem discretas em qualquer elemento nav */
+    nav::-webkit-scrollbar-corner {
+        background: transparent;
+    }
+    
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+        nav:hover {
+            scrollbar-color: rgba(75, 85, 99, 0.5) transparent;
+        }
+        
+        nav:hover::-webkit-scrollbar-thumb {
+            background: rgba(75, 85, 99, 0.5);
+            background-clip: content-box;
+        }
+        
+        nav::-webkit-scrollbar-thumb:hover {
+            background: rgba(55, 65, 81, 0.8);
+            background-clip: content-box;
+        }
+    }
+}
+
+/* Personalização da barra lateral do Filament */
+@layer components {
+    /* Barra lateral principal */
+    .fi-sidebar,
+    .fi-main-sidebar {
+        background: linear-gradient(180deg, #1E3951 0%, #162b3f 100%) !important;
+        border-right: 1px solid rgba(248, 171, 20, 0.2) !important;
+    }
+    
+    /* Cabeçalho da barra lateral */
+    .fi-sidebar-header {
+        background: rgba(30, 57, 81, 0.8) !important;
+        border-bottom: 1px solid rgba(248, 171, 20, 0.2) !important;
+    }
+    
+    /* Logo/Brand */
+    .fi-sidebar-header a,
+    .fi-sidebar-header-logo-ctn a {
+        color: #F8AB14 !important;
+        font-weight: 700 !important;
+    }
+    
+    /* Navegação */
+    .fi-sidebar-nav {
+        background: transparent !important;
+    }
+    
+    /* Itens de navegação */
+    .fi-sidebar-nav-item {
+        border-radius: 8px !important;
+        margin: 4px 8px !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    /* Links de navegação */
+    .fi-sidebar-nav-item a {
+        color: #e2e8f0 !important;
+        font-weight: 500 !important;
+        border-radius: 8px !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    /* Item ativo */
+    .fi-sidebar-nav-item[aria-current="page"],
+    .fi-sidebar-nav-item.fi-active {
+        background: rgba(248, 171, 20, 0.15) !important;
+        border-left: 3px solid #F8AB14 !important;
+    }
+    
+    .fi-sidebar-nav-item[aria-current="page"] a,
+    .fi-sidebar-nav-item.fi-active a {
+        color: #F8AB14 !important;
+        font-weight: 600 !important;
+    }
+    
+    /* Hover */
+    .fi-sidebar-nav-item:hover {
+        background: rgba(248, 171, 20, 0.1) !important;
+    }
+    
+    .fi-sidebar-nav-item:hover a {
+        color: #F8AB14 !important;
+    }
+    
+    /* Ícones */
+    .fi-sidebar-nav-item svg {
+        color: #cbd5e1 !important;
+        transition: color 0.3s ease !important;
+    }
+    
+    .fi-sidebar-nav-item[aria-current="page"] svg,
+    .fi-sidebar-nav-item.fi-active svg {
+        color: #F8AB14 !important;
+    }
+    
+    .fi-sidebar-nav-item:hover svg {
+        color: #F8AB14 !important;
+    }
+    
+    /* Grupos de navegação */
+    .fi-sidebar-nav-group-label {
+        color: #94a3b8 !important;
+        font-weight: 600 !important;
+        font-size: 0.75rem !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.05em !important;
+        margin: 1rem 0.5rem 0.5rem !important;
+    }
+    
+    /* Dark mode adjustments */
+    @media (prefers-color-scheme: dark) {
+        .fi-sidebar,
+        .fi-main-sidebar {
+            background: linear-gradient(180deg, #0f172a 0%, #0a1624 100%) !important;
+            border-right: 1px solid rgba(248, 171, 20, 0.3) !important;
+        }
+        
+        .fi-sidebar-header {
+            background: rgba(15, 23, 42, 0.9) !important;
+        }
+        
+        .fi-sidebar-nav-item[aria-current="page"],
+        .fi-sidebar-nav-item.fi-active {
+            background: rgba(248, 171, 20, 0.2) !important;
+        }
+        
+        .fi-sidebar-nav-item:hover {
+            background: rgba(248, 171, 20, 0.15) !important;
+        }
+    }
+}
+
+/* Customização específica para a página de login */
+@layer components {
+    /* Logo maior na página de login */
+    .fi-simple-page .fi-simple-header-logo img,
+    .fi-simple-page .fi-simple-header-logo svg {
+        height: 8rem !important;
+        width: auto !important;
+        max-height: 8rem !important;
+    }
+    
+    /* Ajustar espaçamento do container da logo na página de login */
+    .fi-simple-page .fi-simple-header-logo {
+        margin-bottom: 2rem !important;
+    }
+    
+    /* Garantir espaçamento adequado no header da página de login */
+    .fi-simple-page .fi-simple-header {
+        margin-bottom: 3rem !important;
+    }
+}
+@layer components {
+    
+}

@@ -1,0 +1,33 @@
+<svg width="400" height="200" viewBox="0 0 400 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Logo Vitta -->
+  <g transform="translate(50, 30)">
+    <!-- V -->
+    <path d="M0 20 L20 80 L40 20 L60 20 L30 100 L10 100 Z" fill="#1E3951"/>
+    
+    <!-- i -->
+    <circle cx="75" cy="15" r="5" fill="#1E3951"/>
+    <rect x="70" y="30" width="10" height="50" fill="#1E3951"/>
+    
+    <!-- t -->
+    <rect x="95" y="20" width="10" height="60" fill="#1E3951"/>
+    <rect x="85" y="35" width="30" height="8" fill="#1E3951"/>
+    
+    <!-- t -->
+    <rect x="130" y="20" width="10" height="60" fill="#1E3951"/>
+    <rect x="120" y="35" width="30" height="8" fill="#1E3951"/>
+    
+    <!-- A -->
+    <path d="M165 80 L175 20 L185 20 L195 80 L185 80 L183 65 L177 65 L175 80 Z M178 50 L182 50 L180 35 Z" fill="#1E3951"/>
+  </g>
+  
+  <!-- Triângulo laranja -->
+  <g transform="translate(50, 120)">
+    <path d="M0 0 L20 0 L10 20 Z" fill="#F8AB14"/>
+  </g>
+  
+  <!-- Texto "INTELIGÊNCIA LOGÍSTICA" -->
+  <g transform="translate(80, 135)" fill="#1E3951">
+    <text x="0" y="15" font-family="Arial, sans-serif" font-size="14" font-weight="bold">INTELIGÊNCIA</text>
+    <text x="0" y="35" font-family="Arial, sans-serif" font-size="14" font-weight="bold">LOGÍSTICA</text>
+  </g>
+</svg>
