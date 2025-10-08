@@ -79,8 +79,10 @@ class AdminPanelProvider extends PanelProvider
             // Descoberta automática de widgets desativada para evitar widgets adicionais no dashboard
             // ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                AccountWidget::class,
-                FilamentInfoWidget::class,
+                \App\Filament\Widgets\OrcamentosStatsWidget::class,
+                \App\Filament\Widgets\ClientesFornecedoresWidget::class,
+                \App\Filament\Widgets\FrotaStatusWidget::class,
+                \App\Filament\Widgets\OperacoesWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
