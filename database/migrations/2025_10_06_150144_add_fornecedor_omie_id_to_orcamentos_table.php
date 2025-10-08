@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('orcamentos', function (Blueprint $table) {
             // Adiciona campo para ID do fornecedor Omie
-            $table->string('fornecedor_omie_id', 100)->nullable()->after('cliente_omie');
+            $table->string('fornecedor_omie_id', 100)->nullable()->after('cliente_omie_id');
             
             // Adiciona índice para performance
             $table->index('fornecedor_omie_id');
