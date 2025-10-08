@@ -17,6 +17,10 @@ class OmieService
         $this->baseUrl = config('services.omie.url', 'https://app.omie.com.br/api/v1');
         $this->appKey = config('services.omie.app_key');
         $this->appSecret = config('services.omie.app_secret');
+
+        if (empty($this->appKey) || empty($this->appSecret)) {
+            throw new \Exception('OMIE_APP_KEY and OMIE_APP_SECRET must be set in the environment.');
+        }
     }
 
     public function buscarCliente(int $clienteId): ?array
