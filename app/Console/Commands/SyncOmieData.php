@@ -128,11 +128,11 @@ class SyncOmieData extends Command
             
             $response = $this->omieService->listClients($page, $perPage);
             
-            if (empty($response['clientes_cadastro'])) {
+            if (!$response['success'] || empty($response['data'])) {
                 break;
             }
             
-            $clientes = $response['clientes_cadastro'];
+            $clientes = $response['data'];
             
             foreach ($clientes as $clienteData) {
                 try {
@@ -167,11 +167,11 @@ class SyncOmieData extends Command
             
             $response = $this->omieService->listSuppliers($page, $perPage);
             
-            if (empty($response['clientes_cadastro'])) {
+            if (!$response['success'] || empty($response['data'])) {
                 break;
             }
             
-            $fornecedores = $response['clientes_cadastro'];
+            $fornecedores = $response['data'];
             
             foreach ($fornecedores as $fornecedorData) {
                 try {

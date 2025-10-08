@@ -203,8 +203,8 @@ class CentroCustoSyncService
         return [
             'codigo_departamento_omie' => $data['codigo_departamento_omie'] ?? null,
             'codigo_departamento_integracao' => $data['codigo_departamento_integracao'] ?? null,
-            'nome' => $data['nome'] ?? null,
-            'descricao' => $data['descricao'] ?? null,
+            'nome' => $data['nome_departamento'] ?? null,
+            'descricao' => $data['descricao_departamento'] ?? null,
             'inativo' => $data['inativo'] ?? 'N',
             'importado_api' => 'S',
             'dados_originais_api' => json_encode($data),

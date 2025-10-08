@@ -138,28 +138,44 @@ class OmieService
             if ($response->successful()) {
                 $data = $response->json();
                 
-                if (isset($data['codigo_status']) && $data['codigo_status'] === '0') {
+                // Se há dados de clientes ou se não há erro, considera sucesso
+                if (isset($data['clientes_cadastro']) || !isset($data['faultstring'])) {
                     return [
-                        'clientes' => array_map(function ($cliente) {
-                            return [
-                                'id' => $cliente['codigo_cliente_omie'],
-                                'nome' => $cliente['nome_fantasia'] ?? $cliente['razao_social'],
-                                'cnpj' => $cliente['cnpj_cpf'] ?? null,
-                            ];
-                        }, $data['clientes_cadastro'] ?? []),
-                        'total_paginas' => $data['total_de_paginas'] ?? 1,
-                        'total_registros' => $data['total_de_registros'] ?? 0,
+                        'success' => true,
+                        'data' => $data['clientes_cadastro'] ?? [],
+                        'pagination' => [
+                            'current_page' => $pagina,
+                            'total_pages' => $data['total_de_paginas'] ?? 1,
+                            'total' => $data['total_de_registros'] ?? 0,
+                        ]
                     ];
                 }
+                
+                return [
+                    'success' => false,
+                    'message' => 'Erro da API: ' . ($data['faultstring'] ?? 'Erro desconhecido'),
+                    'data' => [],
+                    'pagination' => ['current_page' => 1, 'total_pages' => 1, 'total' => 0]
+                ];
             }
             
-            return ['clientes' => [], 'total_paginas' => 1, 'total_registros' => 0];
+            return [
+                'success' => false,
+                'message' => 'Resposta inválida da API Omie',
+                'data' => [],
+                'pagination' => ['current_page' => 1, 'total_pages' => 1, 'total' => 0]
+            ];
         } catch (\Exception $e) {
             Log::error('Erro ao listar clientes Omie', [
                 'erro' => $e->getMessage(),
             ]);
             
-            return ['clientes' => [], 'total_paginas' => 1, 'total_registros' => 0];
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+                'data' => [],
+                'pagination' => ['current_page' => 1, 'total_pages' => 1, 'total' => 0]
+            ];
         }
     }
 
@@ -180,28 +196,44 @@ class OmieService
             if ($response->successful()) {
                 $data = $response->json();
                 
-                if (isset($data['codigo_status']) && $data['codigo_status'] === '0') {
+                // Se há dados de fornecedores ou se não há erro, considera sucesso
+                if (isset($data['cadastros']) || !isset($data['faultstring'])) {
                     return [
-                        'fornecedores' => array_map(function ($fornecedor) {
-                            return [
-                                'id' => $fornecedor['codigo_fornecedor'],
-                                'nome' => $fornecedor['razao_social'] ?? $fornecedor['nome_fantasia'],
-                                'cnpj' => $fornecedor['cnpj_cpf'] ?? null,
-                            ];
-                        }, $data['cadastros'] ?? []),
-                        'total_paginas' => $data['total_de_paginas'] ?? 1,
-                        'total_registros' => $data['total_de_registros'] ?? 0,
+                        'success' => true,
+                        'data' => $data['cadastros'] ?? [],
+                        'pagination' => [
+                            'current_page' => $pagina,
+                            'total_pages' => $data['total_de_paginas'] ?? 1,
+                            'total' => $data['total_de_registros'] ?? 0,
+                        ]
                     ];
                 }
+                
+                return [
+                    'success' => false,
+                    'message' => 'Erro da API: ' . ($data['faultstring'] ?? 'Erro desconhecido'),
+                    'data' => [],
+                    'pagination' => ['current_page' => 1, 'total_pages' => 1, 'total' => 0]
+                ];
             }
             
-            return ['fornecedores' => [], 'total_paginas' => 1, 'total_registros' => 0];
+            return [
+                'success' => false,
+                'message' => 'Resposta inválida da API Omie',
+                'data' => [],
+                'pagination' => ['current_page' => 1, 'total_pages' => 1, 'total' => 0]
+            ];
         } catch (\Exception $e) {
             Log::error('Erro ao listar fornecedores Omie', [
                 'erro' => $e->getMessage(),
             ]);
             
-            return ['fornecedores' => [], 'total_paginas' => 1, 'total_registros' => 0];
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+                'data' => [],
+                'pagination' => ['current_page' => 1, 'total_pages' => 1, 'total' => 0]
+            ];
         }
     }
 
@@ -229,14 +261,126 @@ class OmieService
     }
 
     // Aliases in English for compatibility with existing calls
-    public function testConnection(): bool
+    public function testConnection(): array
     {
-        return $this->testarConexao();
+        try {
+            $response = Http::timeout(10)->post($this->baseUrl . '/geral/clientes/', [
+                'call' => 'ListarClientes',
+                'app_key' => $this->appKey,
+                'app_secret' => $this->appSecret,
+                'param' => [
+                    'pagina' => 1,
+                    'registros_por_pagina' => 1,
+                ],
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                
+                // Se há dados de clientes ou se não há erro, considera sucesso
+                if (isset($data['clientes_cadastro']) || !isset($data['faultstring'])) {
+                    return [
+                        'success' => true,
+                        'message' => 'Conexão estabelecida com sucesso'
+                    ];
+                }
+                
+                return [
+                    'success' => false,
+                    'message' => 'Erro da API: ' . ($data['faultstring'] ?? 'Erro desconhecido')
+                ];
+            }
+
+            return [
+                'success' => false,
+                'message' => 'Falha na requisição HTTP: ' . $response->status()
+            ];
+        } catch (\Exception $e) {
+            Log::error('Erro ao testar conexão com Omie', [
+                'erro' => $e->getMessage(),
+            ]);
+            
+            return [
+                'success' => false,
+                'message' => $e->getMessage()
+            ];
+        }
     }
 
     public function listClients(int $page = 1, int $perPage = 50, array $filters = []): array
     {
         // Filters parameter is currently unused; kept for signature compatibility.
         return $this->listarClientes($page, $perPage);
+    }
+
+    public function listSuppliers(int $page = 1, int $perPage = 50, array $filters = []): array
+    {
+        return $this->listarFornecedores($page, $perPage);
+    }
+
+    public function listDepartments(int $page = 1, int $perPage = 50, array $filters = []): array
+    {
+        try {
+            $response = Http::timeout(30)->post($this->baseUrl . '/geral/departamentos/', [
+                'call' => 'ListarDepartamentos',
+                'app_key' => $this->appKey,
+                'app_secret' => $this->appSecret,
+                'param' => [
+                    'pagina' => $page,
+                    'registros_por_pagina' => $perPage,
+                ],
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                
+                // Se há dados de departamentos ou se não há erro, considera sucesso
+                if (isset($data['departamentos']) || !isset($data['faultstring'])) {
+                    return [
+                        'success' => true,
+                        'data' => array_map(function ($departamento) {
+                            return [
+                                'codigo_departamento_omie' => $departamento['codigo'] ?? null,
+                                'codigo_departamento_integracao' => $departamento['codigo_departamento_integracao'] ?? null,
+                                'nome_departamento' => $departamento['descricao'] ?? null,
+                                'descricao_departamento' => $departamento['descricao'] ?? null,
+                                'estrutura' => $departamento['estrutura'] ?? null,
+                                'inativo' => $departamento['inativo'] ?? 'N',
+                            ];
+                        }, $data['departamentos'] ?? []),
+                        'pagination' => [
+                            'current_page' => $page,
+                            'total_pages' => $data['total_de_paginas'] ?? 1,
+                            'total' => $data['total_de_registros'] ?? 0,
+                        ]
+                    ];
+                }
+                
+                return [
+                    'success' => false,
+                    'message' => 'Erro da API: ' . ($data['faultstring'] ?? 'Erro desconhecido'),
+                    'data' => [],
+                    'pagination' => ['current_page' => 1, 'total_pages' => 1, 'total' => 0]
+                ];
+            }
+            
+            return [
+                'success' => false,
+                'message' => 'Resposta inválida da API Omie',
+                'data' => [],
+                'pagination' => ['current_page' => 1, 'total_pages' => 1, 'total' => 0]
+            ];
+        } catch (\Exception $e) {
+            Log::error('Erro ao listar departamentos Omie', [
+                'erro' => $e->getMessage(),
+            ]);
+            
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+                'data' => [],
+                'pagination' => ['current_page' => 1, 'total_pages' => 1, 'total' => 0]
+            ];
+        }
     }
 }

@@ -53,8 +53,11 @@ class User extends Authenticatable implements FilamentUser
      */
     public function canAccessPanel(Panel $panel): bool
     {
-        // Por enquanto, todos os usuários autenticados podem acessar o painel
-        // Você pode adicionar lógica mais específica aqui se necessário
-        return true;
+        // Verifica se o painel é o admin
+        if ($panel->getId() === 'admin') {
+            return true;
+        }
+        
+        return false;
     }
 }
