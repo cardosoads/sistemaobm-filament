@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SyncProgressController;
 
 Route::get('/', function () {
-    return redirect('/admin');
+    return view('welcome');
 });
 
 // Rotas para progresso da sincronização
