@@ -684,8 +684,8 @@ class OrcamentoForm
         $valorCombustivel = (float) ($get('valor_combustivel') ?? 0);
         $horaExtra = (float) ($get('hora_extra') ?? 0);
         $pedagio = (float) ($get('pedagio') ?? 0);
-        $percentualLucro = (float) ($get('percentual_lucro') ?? 0);
-        $percentualImpostos = (float) ($get('percentual_impostos') ?? 0);
+        $percentualLucro = (float) ($get('lucro_percentual') ?? 0);
+        $percentualImpostos = (float) ($get('impostos_percentual') ?? 0);
         $grupoImpostoId = $get('grupo_imposto_id');
 
         // Cálculo do valor total base
