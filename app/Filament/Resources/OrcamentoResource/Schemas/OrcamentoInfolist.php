@@ -81,32 +81,8 @@ class OrcamentoInfolist
                             ->label('Observações')
                             ->columnSpanFull()
                             ->visible(fn ($record) => !empty($record->observacoes)),
-                    ]),
-
-                // Valores Totais
-                Section::make('Valores Totais')
-                    ->schema([
-                        Grid::make(4)
-                            ->schema([
-                                TextEntry::make('valor_total')
-                                    ->label('Valor Total')
-                                    ->money('BRL')
-                                    ->weight(FontWeight::Bold),
-                                
-                                TextEntry::make('valor_impostos')
-                                    ->label('Valor Impostos')
-                                    ->money('BRL'),
-                                
-                                TextEntry::make('valor_final')
-                                    ->label('Valor Final')
-                                    ->money('BRL')
-                                    ->weight(FontWeight::Bold)
-                                    ->color('success'),
-                                
-                                TextEntry::make('grupoImposto.nome')
-                                    ->label('Grupo de Imposto'),
-                            ]),
-                    ]),
+                    ])
+                    ->columnSpanFull(),
 
                 // Seção específica para Prestadores
                 Section::make('Detalhes dos Prestadores')
@@ -169,7 +145,8 @@ class OrcamentoInfolist
                             ])
                             ->contained(false),
                     ])
-                    ->visible(fn ($record) => $record->tipo_orcamento === 'prestador'),
+                    ->visible(fn ($record) => $record->tipo_orcamento === 'prestador')
+                    ->columnSpanFull(),
 
                 // Seção específica para Aumento KM
                 Section::make('Detalhes do Aumento KM')
@@ -227,7 +204,10 @@ class OrcamentoInfolist
                             ])
                             ->contained(false),
                     ])
-                    ->visible(fn ($record) => $record->tipo_orcamento === 'aumento_km'),
+                    ->visible(fn ($record) => $record->tipo_orcamento === 'aumento_km')
+                    ->columnSpanFull(),
+
+
 
                 // Seção específica para Próprio Nova Rota
                 Section::make('Detalhes da Nova Rota')
@@ -340,7 +320,35 @@ class OrcamentoInfolist
                             ])
                             ->contained(false),
                     ])
-                    ->visible(fn ($record) => $record->tipo_orcamento === 'proprio_nova_rota'),
-            ]);
+                    ->visible(fn ($record) => $record->tipo_orcamento === 'proprio_nova_rota')
+                    ->columnSpanFull(),
+
+            // Valores Totais
+            Section::make('Valores Totais')
+                ->schema([
+                    Grid::make(4)
+                        ->schema([
+                            TextEntry::make('valor_total')
+                                ->label('Valor Total')
+                                ->money('BRL')
+                                ->weight(FontWeight::Bold),
+
+                            TextEntry::make('valor_impostos')
+                                ->label('Valor Impostos')
+                                ->money('BRL'),
+
+                            TextEntry::make('valor_final')
+                                ->label('Valor Final')
+                                ->money('BRL')
+                                ->weight(FontWeight::Bold)
+                                ->color('success'),
+
+                            TextEntry::make('grupoImposto.nome')
+                                ->label('Grupo de Imposto'),
+                        ]),
+                ])
+                ->columnSpanFull(),
+
+        ]);
     }
 }

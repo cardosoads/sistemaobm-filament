@@ -38,4 +38,11 @@ class ViewOrcamento extends ViewRecord
 
         return $data;
     }
+
+    public function getRelationManagers(): array
+    {
+        // Não exibir nenhum RelationManager na página de visualização
+        // Os dados são mostrados através do Infolist
+        return [];
+    }
 }
