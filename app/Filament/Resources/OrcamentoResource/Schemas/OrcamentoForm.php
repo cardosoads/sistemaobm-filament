@@ -710,10 +710,10 @@ class OrcamentoForm
             if ($grupoImposto) {
                 $valorImpostos = $grupoImposto->calcularValorImpostos($baseImpostos);
                 // Atualizar o percentual de impostos baseado no grupo
-                $set('percentual_impostos', $grupoImposto->percentual_total);
+                $set('impostos_percentual', $grupoImposto->percentual_total);
             }
         } else {
-            // Fallback para o campo percentual_impostos se não houver grupo
+            // Fallback para o campo impostos_percentual se não houver grupo
             $valorImpostos = $baseImpostos * ($percentualImpostos / 100);
         }
 
