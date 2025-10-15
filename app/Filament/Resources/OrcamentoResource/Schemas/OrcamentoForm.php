@@ -306,39 +306,7 @@ class OrcamentoForm
                             })
                             ->nullable(),
                             
-                        Components\TextInput::make('percentual_lucro')
-                            ->label('Percentual de Lucro (%)')
-                            ->numeric()
-                            ->suffix('%')
-                            ->live()
-                            ->afterStateUpdated(function (Get $get, Set $set) {
-                                self::calcularValoresAumentoKm($get, $set);
-                            })
-                            ->nullable(),
-                            
-                        Components\Select::make('grupo_imposto_id')
-                            ->label('Grupo de Imposto')
-                            ->relationship('grupoImposto', 'nome')
-                            ->getOptionLabelFromRecordUsing(fn (\App\Models\GrupoImposto $record) => 
-                                $record->nome . ' (' . $record->percentual_total_formatado . ')'
-                            )
-                            ->searchable()
-                            ->preload()
-                            ->live()
-                            ->afterStateUpdated(function (Get $get, Set $set) {
-                                self::calcularValoresAumentoKm($get, $set);
-                            })
-                            ->nullable(),
-                            
-                        Components\TextInput::make('percentual_impostos')
-                            ->label('Percentual de Impostos (%)')
-                            ->numeric()
-                            ->suffix('%')
-                            ->live()
-                            ->afterStateUpdated(function (Get $get, Set $set) {
-                                self::calcularValoresAumentoKm($get, $set);
-                            })
-                            ->nullable(),
+
                     ])
                     ->columns(2)
                     ->columnSpanFull()
