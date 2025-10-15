@@ -81,13 +81,56 @@ class ObmForm
                             ->reactive()
                             ->helperText('O colaborador não pode ter sobreposição de datas com outras OBMs'),
 
+                        Components\Select::make('veiculo_busca')
+                            ->label('Buscar Veículo por Placa/RENAVAM')
+                            ->placeholder('Digite placa ou RENAVAM para buscar')
+                            ->searchable()
+                            ->getSearchResultsUsing(function (string $search) {
+                                return \App\Models\Veiculo::query()
+                                    ->where('placa', 'like', "%{$search}%")
+                                    ->orWhere('renavam', 'like', "%{$search}%")
+                                    ->limit(10)
+                                    ->get()
+                                    ->mapWithKeys(fn ($veiculo) => [
+                                        $veiculo->id => "Placa: {$veiculo->placa} - RENAVAM: {$veiculo->renavam} - " . 
+                                                       "Modelo: {$veiculo->marca_modelo} - Tipo: " . 
+                                                       ($veiculo->tipoVeiculo->nome ?? 'N/A')
+                                    ]);
+                            })
+                            ->getOptionLabelUsing(fn ($value) => 
+                                \App\Models\Veiculo::find($value)?->placa ?? $value
+                            )
+                            ->reactive()
+                            ->afterStateUpdated(function (Set $set, $state) {
+                                if ($state) {
+                                    $veiculo = \App\Models\Veiculo::find($state);
+                                    if ($veiculo && $veiculo->tipo_veiculo_id) {
+                                        // Buscar frotas ativas do mesmo tipo de veículo
+                                        $frota = \App\Models\Frota::where('tipo_veiculo_id', $veiculo->tipo_veiculo_id)
+                                            ->where('active', true)
+                                            ->first();
+                                        if ($frota) {
+                                            $set('frota_id', $frota->id);
+                                        }
+                                    }
+                                }
+                            })
+                            ->helperText('Busque por placa ou RENAVAM para encontrar o veículo'),
+
                         Components\Select::make('frota_id')
-                            ->label('Veículo')
-                            ->placeholder('Selecione o veículo')
+                            ->label('Veículo da Frota')
+                            ->placeholder('Selecione o veículo da frota')
                             ->relationship('frota', 'id', function (Builder $query, Get $get) {
                                 $orcamentoId = $get('orcamento_id');
+                                $veiculoBuscaId = $get('veiculo_busca');
                                 
-                                if ($orcamentoId) {
+                                if ($veiculoBuscaId) {
+                                    // Se há uma busca por veículo, filtrar por tipo de veículo
+                                    $veiculo = \App\Models\Veiculo::find($veiculoBuscaId);
+                                    if ($veiculo && $veiculo->tipo_veiculo_id) {
+                                        $query->where('tipo_veiculo_id', $veiculo->tipo_veiculo_id);
+                                    }
+                                } elseif ($orcamentoId) {
                                     // Buscar o frota_id do orçamento selecionado
                                     $orcamento = \App\Models\Orcamento::find($orcamentoId);
                                     if ($orcamento && $orcamento->frota_id) {
@@ -113,8 +156,8 @@ class ObmForm
                             ->preload()
                             ->required()
                             ->reactive()
-                            ->disabled(fn (Get $get) => !$get('orcamento_id'))
-                            ->helperText('Primeiro selecione um orçamento para ver o veículo disponível'),
+                            ->disabled(fn (Get $get) => !$get('orcamento_id') && !$get('veiculo_busca'))
+                            ->helperText('Selecione um orçamento OU busque por placa/RENAVAM'),
                     ]),
 
                 SchemaComponents\Section::make('Status e Observações')

@@ -15,11 +15,16 @@ class ViewOrcamento extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            EditAction::make(),
             Action::make('Exportar PDF')
                 ->url(route('orcamentos.pdf', $this->record))
                 ->openUrlInNewTab()
-                ->color('primary'),
+                ->color('danger')
+                ->icon('heroicon-o-document-arrow-down')
+                ->tooltip('Exportar orçamento em formato PDF')
+                ->badge()
+                ->extraAttributes(['class' => 'bg-red-600 hover:bg-red-700'])
+                ->label(''),
+            EditAction::make(),
         ];
     }
 
