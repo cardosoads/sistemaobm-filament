@@ -139,6 +139,63 @@ class OrcamentoForm
                     ])
                     ->columns(2)
                     ->columnSpanFull(),
+
+                Section::make('Configurações de Lucro e Impostos')
+                    ->schema([
+                        Components::TextInput::make('lucro_percentual')
+                            ->label('Lucro (%)')
+                            ->numeric()
+                            ->suffix('%')
+                            ->required()
+                            ->live()
+                            ->afterStateUpdated(function (Get $get, Set $set) {
+                                if ($get('tipo_orcamento') === 'prestador') {
+                                    self::calcularValoresPrestador($get, $set);
+                                } elseif ($get('tipo_orcamento') === 'aumento_km') {
+                                    self::calcularValoresAumentoKm($get, $set);
+                                } elseif ($get('tipo_orcamento') === 'proprio_nova_rota') {
+                                    self::calcularValoresProprioNovaRota($get, $set);
+                                }
+                            }),
+
+                        Components::TextInput::make('impostos_percentual')
+                            ->label('Impostos (%)')
+                            ->numeric()
+                            ->suffix('%')
+                            ->required()
+                            ->live()
+                            ->afterStateUpdated(function (Get $get, Set $set) {
+                                if ($get('tipo_orcamento') === 'prestador') {
+                                    self::calcularValoresPrestador($get, $set);
+                                } elseif ($get('tipo_orcamento') === 'aumento_km') {
+                                    self::calcularValoresAumentoKm($get, $set);
+                                } elseif ($get('tipo_orcamento') === 'proprio_nova_rota') {
+                                    self::calcularValoresProprioNovaRota($get, $set);
+                                }
+                            }),
+
+                        Components::Select::make('grupo_imposto_id')
+                            ->label('Grupo de Imposto')
+                            ->relationship('grupoImposto', 'nome')
+                            ->getOptionLabelFromRecordUsing(fn (\App\Models\GrupoImposto $record) => 
+                                $record->nome . ' (' . $record->percentual_total_formatado . ')'
+                            )
+                            ->searchable()
+                            ->preload()
+                            ->required()
+                            ->live()
+                            ->afterStateUpdated(function (Get $get, Set $set) {
+                                if ($get('tipo_orcamento') === 'prestador') {
+                                    self::calcularValoresPrestador($get, $set);
+                                } elseif ($get('tipo_orcamento') === 'aumento_km') {
+                                    self::calcularValoresAumentoKm($get, $set);
+                                } elseif ($get('tipo_orcamento') === 'proprio_nova_rota') {
+                                    self::calcularValoresProprioNovaRota($get, $set);
+                                }
+                            }),
+                    ])
+                    ->columns(3)
+                    ->columnSpanFull(),
                     
                 // Seção condicional para Prestador
                 Section::make('Dados do Prestador')
@@ -183,39 +240,7 @@ class OrcamentoForm
                             })
                             ->nullable(),
                             
-                        Components\TextInput::make('lucro_percentual')
-                            ->label('Lucro (%)')
-                            ->numeric()
-                            ->suffix('%')
-                            ->live()
-                            ->afterStateUpdated(function (Get $get, Set $set) {
-                                self::calcularValoresPrestador($get, $set);
-                            })
-                            ->nullable(),
-                            
-                        Components\TextInput::make('impostos_percentual')
-                            ->label('Impostos (%)')
-                            ->numeric()
-                            ->suffix('%')
-                            ->live()
-                            ->afterStateUpdated(function (Get $get, Set $set) {
-                                self::calcularValoresPrestador($get, $set);
-                            })
-                            ->nullable(),
-                            
-                        Components\Select::make('grupo_imposto_id')
-                            ->label('Grupo de Imposto')
-                            ->relationship('grupoImposto', 'nome')
-                            ->getOptionLabelFromRecordUsing(fn (\App\Models\GrupoImposto $record) => 
-                                $record->nome . ' (' . $record->percentual_total_formatado . ')'
-                            )
-                            ->searchable()
-                            ->preload()
-                            ->live()
-                            ->afterStateUpdated(function (Get $get, Set $set) {
-                                self::calcularValoresPrestador($get, $set);
-                            })
-                            ->nullable(),
+
                     ])
                     ->columns(2)
                     ->columnSpanFull()
@@ -501,52 +526,8 @@ class OrcamentoForm
                             ->helperText('Preenchido automaticamente com base na Frequência de Atendimento')
                             ->visible(fn ($get) => $get('incluir_prestador')),
                             
-                        Components\TextInput::make('lucro_percentual_rota')
-                            ->label('Lucro (%)')
-                            ->numeric()
-                            ->suffix('%')
-                            ->nullable()
-                            ->live()
-                            ->afterStateUpdated(function ($state, $set, $get) {
-                                // Recalcular valores se for tipo próprio nova rota
-                                if ($get('tipo_orcamento') === 'proprio_nova_rota') {
-                                    static::calcularValoresProprioNovaRota($get, $set);
-                                }
-                            })
-                            ->visible(fn ($get) => $get('incluir_prestador')),
-                            
-                        Components\TextInput::make('impostos_percentual_rota')
-                            ->label('Impostos (%)')
-                            ->numeric()
-                            ->suffix('%')
-                            ->nullable()
-                            ->live()
-                            ->afterStateUpdated(function ($state, $set, $get) {
-                                // Recalcular valores se for tipo próprio nova rota
-                                if ($get('tipo_orcamento') === 'proprio_nova_rota') {
-                                    static::calcularValoresProprioNovaRota($get, $set);
-                                }
-                            })
-                            ->visible(fn ($get) => $get('incluir_prestador')),
-                            
-                        Components\Select::make('grupo_imposto_id_rota')
-                            ->label('Grupo de Imposto')
-                            ->relationship('grupoImposto', 'nome')
-                            ->getOptionLabelFromRecordUsing(fn (\App\Models\GrupoImposto $record) => 
-                                $record->nome . ' (' . $record->percentual_total_formatado . ')'
-                            )
-                            ->searchable()
-                            ->preload()
-                            ->placeholder('Selecione uma opção')
-                            ->nullable()
-                            ->live()
-                            ->afterStateUpdated(function ($state, $set, $get) {
-                                // Recalcular valores se for tipo próprio nova rota
-                                if ($get('tipo_orcamento') === 'proprio_nova_rota') {
-                                    static::calcularValoresProprioNovaRota($get, $set);
-                                }
-                            })
-                            ->visible(fn ($get) => $get('incluir_prestador')),
+
+
                     ])
                     ->columnSpanFull()
                     ->visible(fn ($get) => $get('tipo_orcamento') === 'proprio_nova_rota'),
@@ -563,8 +544,8 @@ class OrcamentoForm
                                 
                                 $valorFuncionario = (float) ($get('valor_funcionario') ?? 0);
                                 $valorAluguelFrota = (float) ($get('valor_aluguel_frota') ?? 0);
-                                $lucroPercentual = (float) ($get('lucro_percentual_rota') ?? 0);
-                                $grupoImpostoId = $get('grupo_imposto_id_rota');
+                                $lucroPercentual = (float) ($get('lucro_percentual') ?? 0);
+                                $grupoImpostoId = $get('grupo_imposto_id');
                                 
                                 // Calcular valores
                                 $valorTotalGeral = $valorFuncionario + $valorAluguelFrota;
@@ -572,7 +553,7 @@ class OrcamentoForm
                                 $baseImpostos = $valorTotalGeral + $valorLucro;
                                 
                                 // Obter percentual de impostos
-                                $percentualImpostos = 0;
+                                $percentualImpostos = (float) ($get('impostos_percentual') ?? 0);
                                 $valorImpostos = 0;
                                 if ($grupoImpostoId) {
                                     $grupoImposto = \App\Models\GrupoImposto::find($grupoImpostoId);
@@ -580,6 +561,8 @@ class OrcamentoForm
                                         $percentualImpostos = $grupoImposto->percentual_total;
                                         $valorImpostos = $grupoImposto->calcularValorImpostos($baseImpostos);
                                     }
+                                } else {
+                                    $valorImpostos = $baseImpostos * ($percentualImpostos / 100);
                                 }
                                 
                                 return new \Illuminate\Support\HtmlString('
@@ -787,9 +770,9 @@ class OrcamentoForm
         $valorAluguelFrota = (float) ($get('valor_aluguel_frota') ?? 0);
         $valorCombustivel = (float) ($get('valor_combustivel') ?? 0);
         $valorPedagio = (float) ($get('valor_pedagio') ?? 0);
-        $lucroPercentual = (float) ($get('lucro_percentual_rota') ?? 0);
-        $impostosPercentual = (float) ($get('impostos_percentual_rota') ?? 0);
-        $grupoImpostoId = $get('grupo_imposto_id_rota'); // Corrigido para usar o campo correto
+        $lucroPercentual = (float) ($get('lucro_percentual') ?? 0);
+        $impostosPercentual = (float) ($get('impostos_percentual') ?? 0);
+        $grupoImpostoId = $get('grupo_imposto_id');
 
         // Calcular valor total base (funcionário + aluguel frota + combustível + pedágio)
         $valorTotalBase = $valorFuncionario + $valorAluguelFrota + $valorCombustivel + $valorPedagio;
@@ -806,8 +789,8 @@ class OrcamentoForm
             $grupoImposto = \App\Models\GrupoImposto::find($grupoImpostoId);
             if ($grupoImposto) {
                 $valorImpostos = $grupoImposto->calcularValorImpostos($baseImpostos);
-                // Atualizar o percentual de impostos baseado no grupo
-                $set('impostos_percentual_rota', $grupoImposto->percentual_total);
+                // Atualizar o percentual de impostos global baseado no grupo
+                $set('impostos_percentual', $grupoImposto->percentual_total);
             }
         } else {
             // Fallback para o campo impostos_percentual_rota se não houver grupo
