@@ -6,9 +6,11 @@ use App\Filament\Resources\OrcamentoResource\Pages;
 use App\Filament\Resources\OrcamentoResource\RelationManagers;
 use App\Models\Orcamento;
 use BackedEnum;
+use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
+
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
@@ -29,6 +31,8 @@ class OrcamentoResource extends Resource
         return \App\Filament\Resources\OrcamentoResource\Schemas\OrcamentoForm::configure($schema);
     }
 
+
+
     public static function table(Table $table): Table
     {
         return \App\Filament\Resources\OrcamentoResource\Tables\OrcamentoTable::configure($table);
@@ -37,7 +41,6 @@ class OrcamentoResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\PrestadoresRelationManager::class,
             RelationManagers\AumentosKmRelationManager::class,
             RelationManagers\PropriosNovaRotaRelationManager::class,
         ];
@@ -48,6 +51,7 @@ class OrcamentoResource extends Resource
         return [
             'index' => Pages\ListOrcamentos::route('/'),
             'create' => Pages\CreateOrcamento::route('/create'),
+            'view' => Pages\ViewOrcamento::route('/{record}'),
             'edit' => Pages\EditOrcamento::route('/{record}/edit'),
         ];
     }

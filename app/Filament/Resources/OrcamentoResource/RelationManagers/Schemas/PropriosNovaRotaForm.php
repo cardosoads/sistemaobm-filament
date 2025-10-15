@@ -33,9 +33,9 @@ class PropriosNovaRotaForm
                                 if ($state) {
                                     // Buscar a frequência de atendimento do orçamento pai
                                     $orcamento = $livewire->getOwnerRecord();
-                                    if ($orcamento && $orcamento->frequencia_atendimento_dias) {
-                                        $diasMarcados = is_array($orcamento->frequencia_atendimento_dias) 
-                                            ? count($orcamento->frequencia_atendimento_dias) 
+                                    if ($orcamento && $orcamento->frequencia_atendimento) {
+                                        $diasMarcados = is_array($orcamento->frequencia_atendimento) 
+                                            ? count($orcamento->frequencia_atendimento) 
                                             : 0;
                                         $set('fornecedor_dias', $diasMarcados);
                                     }

@@ -15,14 +15,14 @@ class Orcamento extends Model
         'data_solicitacao',
         'centro_custo_id',
         'id_protocolo',
-        'cliente_omie',
+        'cliente_omie_id',
         'numero_orcamento',
         'nome_rota',
         'id_logcare',
         'cliente_nome',
         'fornecedor_omie_id',
         'horario',
-        'frequencia_atendimento_dias',
+        'frequencia_atendimento',
         'tipo_orcamento',
         'user_id',
         'data_orcamento',
@@ -57,7 +57,7 @@ class Orcamento extends Model
         'valor_total' => 'decimal:2',
         'valor_impostos' => 'decimal:2',
         'valor_final' => 'decimal:2',
-        'frequencia_atendimento_dias' => 'array',
+        'frequencia_atendimento' => 'array',
     ];
 
     protected static function boot()
@@ -152,7 +152,7 @@ class Orcamento extends Model
 
     public function clienteFornecedor(): BelongsTo
     {
-        return $this->belongsTo(ClienteFornecedor::class, 'cliente_omie');
+        return $this->belongsTo(ClienteFornecedor::class, 'cliente_omie_id');
     }
 
     public function fornecedor(): BelongsTo
@@ -204,7 +204,7 @@ class Orcamento extends Model
 
     public function getFrequenciaAtendimentoFormatadaAttribute(): string
     {
-        if (!$this->frequencia_atendimento_dias) {
+        if (!$this->frequencia_atendimento) {
             return '';
         }
 
@@ -220,7 +220,7 @@ class Orcamento extends Model
 
         $diasSelecionados = array_map(function($dia) use ($diasSemana) {
             return $diasSemana[$dia] ?? $dia;
-        }, $this->frequencia_atendimento_dias);
+        }, $this->frequencia_atendimento);
 
         return implode(', ', $diasSelecionados);
     }

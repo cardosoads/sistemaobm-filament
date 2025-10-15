@@ -5,6 +5,7 @@ namespace App\Filament\Resources\OrcamentoResource\Pages;
 use App\Filament\Resources\OrcamentoResource;
 use App\Models\OrcamentoPrestador;
 use App\Models\OrcamentoAumentoKm;
+use App\Models\OrcamentoProprioNovaRota;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
 
@@ -14,6 +15,7 @@ class CreateOrcamento extends CreateRecord
     
     protected array $prestadorData = [];
     protected array $aumentoKmData = [];
+    protected array $proprioNovaRotaData = [];
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
@@ -77,6 +79,82 @@ class CreateOrcamento extends CreateRecord
             // Armazenar dados do aumento de km para usar no handleRecordCreation
             $this->aumentoKmData = $aumentoKmData;
         }
+        
+        // Se for orçamento do tipo proprio_nova_rota, extrair dados específicos do próprios nova rota
+        if (($data['tipo_orcamento'] ?? null) === 'proprio_nova_rota') {
+            // Campos que pertencem à tabela orcamento_proprio_nova_rota
+            $proprioNovaRotaFields = [
+                'incluir_funcionario',
+                'incluir_frota',
+                'incluir_fornecedor',
+                'recurso_humano_id',
+                'base_id',
+                'valor_funcionario',
+                'frota_id',
+                'valor_aluguel_frota',
+                'quantidade_dias',
+                'valor_combustivel',
+                'valor_pedagio',
+                'fornecedor_omie_id',
+                'fornecedor_nome',
+                'fornecedor_referencia',
+                'fornecedor_dias',
+                'fornecedor_custo',
+                'fornecedor_lucro',
+                'fornecedor_impostos',
+                'fornecedor_total',
+                'valor_total_rotas',
+                'valor_total_geral',
+                'lucro_percentual',
+                'valor_lucro',
+                'impostos_percentual',
+                'valor_impostos',
+                'valor_final',
+                'grupo_imposto_id'
+            ];
+
+            // Extrair dados do próprios nova rota
+            $proprioNovaRotaData = [];
+            foreach ($proprioNovaRotaFields as $field) {
+                if (isset($data[$field])) {
+                    $proprioNovaRotaData[$field] = $data[$field];
+                    unset($data[$field]); // Remover do array principal
+                }
+            }
+            
+            // Mapear campos da seção "Valores" principal para os campos específicos do próprios nova rota
+            if (isset($data['valor_total'])) {
+                $proprioNovaRotaData['valor_total_geral'] = $data['valor_total'];
+                unset($data['valor_total']);
+            }
+            if (isset($data['valor_impostos'])) {
+                $proprioNovaRotaData['valor_impostos'] = $data['valor_impostos'];
+                unset($data['valor_impostos']);
+            }
+            if (isset($data['valor_final'])) {
+                $proprioNovaRotaData['valor_final'] = $data['valor_final'];
+                unset($data['valor_final']);
+            }
+            
+            // Mapear o campo grupo_imposto_id_rota para grupo_imposto_id
+            if (isset($data['grupo_imposto_id_rota'])) {
+                $proprioNovaRotaData['grupo_imposto_id'] = $data['grupo_imposto_id_rota'];
+                unset($data['grupo_imposto_id_rota']);
+            }
+            
+            // Mapear os campos de percentuais da rota para os nomes corretos da tabela
+            if (isset($data['lucro_percentual_rota'])) {
+                $proprioNovaRotaData['lucro_percentual'] = $data['lucro_percentual_rota'];
+                unset($data['lucro_percentual_rota']);
+            }
+            if (isset($data['impostos_percentual_rota'])) {
+                $proprioNovaRotaData['impostos_percentual'] = $data['impostos_percentual_rota'];
+                unset($data['impostos_percentual_rota']);
+            }
+
+            // Armazenar dados do próprios nova rota para usar no handleRecordCreation
+            $this->proprioNovaRotaData = $proprioNovaRotaData;
+        }
 
         return $data;
     }
@@ -98,6 +176,13 @@ class CreateOrcamento extends CreateRecord
             // Criar novo registro de aumento de km
             $this->aumentoKmData['orcamento_id'] = $record->id;
             OrcamentoAumentoKm::create($this->aumentoKmData);
+        }
+        
+        // Se existem dados do próprios nova rota para salvar
+        if (isset($this->proprioNovaRotaData) && !empty($this->proprioNovaRotaData)) {
+            // Criar novo registro de próprios nova rota
+            $this->proprioNovaRotaData['orcamento_id'] = $record->id;
+            OrcamentoProprioNovaRota::create($this->proprioNovaRotaData);
         }
 
         return $record;

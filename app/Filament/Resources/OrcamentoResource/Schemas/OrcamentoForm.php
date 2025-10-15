@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\OrcamentoResource\Schemas;
 
-use Filament\Forms\Components;
+use Filament\Forms\Components as Components;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
@@ -37,7 +37,7 @@ class OrcamentoForm
                                 
                                 // Se mudou para aumento_km, sincronizar quantidade_dias_aumento com frequencia
                                 if ($state === 'aumento_km') {
-                                    $frequenciaDias = $get('frequencia_atendimento_dias');
+                                    $frequenciaDias = $get('frequencia_atendimento');
                                     $diasMarcados = is_array($frequenciaDias) ? count($frequenciaDias) : 0;
                                     $set('quantidade_dias_aumento', $diasMarcados);
                                 }
@@ -74,7 +74,7 @@ class OrcamentoForm
                             ->numeric()
                             ->nullable(),
                             
-                        Components\Select::make('cliente_omie')
+                        Components\Select::make('cliente_omie_id')
                             ->label('Cliente (OMIE)')
                             ->placeholder('Selecione um cliente')
                             ->relationship(
@@ -91,7 +91,7 @@ class OrcamentoForm
                             ->label('Horário')
                             ->nullable(),
                             
-                        Components\CheckboxList::make('frequencia_atendimento_dias')
+                        Components\CheckboxList::make('frequencia_atendimento')
                             ->label('Frequência de Atendimento')
                             ->options([
                                 'seg' => 'Seg',
@@ -340,7 +340,7 @@ class OrcamentoForm
                             ->afterStateUpdated(function ($state, $set, $get) {
                                 if ($state && $get('tipo_orcamento') === 'proprio_nova_rota') {
                                     // Preenche automaticamente a quantidade de dias baseado na frequência de atendimento
-                                    $frequenciaDias = $get('frequencia_atendimento_dias') ?? [];
+                                    $frequenciaDias = $get('frequencia_atendimento') ?? [];
                                     $quantidadeDias = count($frequenciaDias);
                                     $set('fornecedor_dias', $quantidadeDias);
                                 }

@@ -54,7 +54,11 @@ class OrcamentoAumentoKm extends Model
     {
         // Cálculo do valor total base
         $km_total = $this->km_por_dia * $this->quantidade_dias_aumento;
-        $litros_necessarios = $km_total / $this->combustivel_km_litro;
+        
+        // Evitar divisão por zero
+        $combustivel_km_litro = $this->combustivel_km_litro ?: 1;
+        $litros_necessarios = $km_total / $combustivel_km_litro;
+        
         $custo_combustivel = $litros_necessarios * $this->valor_combustivel;
         
         $this->valor_total = $custo_combustivel + $this->hora_extra + $this->pedagio;

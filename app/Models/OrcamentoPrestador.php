@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\ClienteFornecedor;
 
 class OrcamentoPrestador extends Model
 {
@@ -92,5 +93,10 @@ class OrcamentoPrestador extends Model
     public function grupoImposto(): BelongsTo
     {
         return $this->belongsTo(GrupoImposto::class, 'grupo_imposto_id');
+    }
+
+    public function fornecedor(): BelongsTo
+    {
+        return $this->belongsTo(ClienteFornecedor::class, 'fornecedor_omie_id', 'codigo_cliente_omie');
     }
 }

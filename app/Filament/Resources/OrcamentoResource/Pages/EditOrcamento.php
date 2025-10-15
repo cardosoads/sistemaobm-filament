@@ -115,6 +115,10 @@ class EditOrcamento extends EditRecord
 
             // Armazenar dados do prestador para usar no handleRecordUpdate
             $this->prestadorData = $prestadorData;
+            
+            // IMPORTANTE: Manter os campos que pertencem à tabela principal 'orcamentos'
+            // Os campos cliente_omie_id, frequencia_atendimento e valor_final devem permanecer
+            // no array $data para serem salvos na tabela principal
         }
         
         // Se for orçamento do tipo aumento_km, extrair dados específicos do aumento de km
@@ -153,11 +157,17 @@ class EditOrcamento extends EditRecord
         if (($data['tipo_orcamento'] ?? null) === 'proprio_nova_rota') {
             // Campos que pertencem à tabela orcamento_proprio_nova_rota
             $proprioNovaRotaFields = [
+                'incluir_funcionario',
+                'incluir_frota',
+                'incluir_fornecedor',
                 'recurso_humano_id',
                 'base_id',
                 'valor_funcionario',
                 'frota_id',
                 'valor_aluguel_frota',
+                'quantidade_dias',
+                'valor_combustivel',
+                'valor_pedagio',
                 'fornecedor_omie_id',
                 'fornecedor_nome',
                 'fornecedor_referencia',
@@ -316,14 +326,15 @@ class EditOrcamento extends EditRecord
         
         switch ($tipoOrcamento) {
             case 'prestador':
-                $relationManagers[] = OrcamentoResource\RelationManagers\PrestadoresRelationManager::class;
+                // Seção Prestadores removida
                 break;
             case 'aumento_km':
                 // Removido AumentosKmRelationManager para não exibir na edição
                 // $relationManagers[] = OrcamentoResource\RelationManagers\AumentosKmRelationManager::class;
                 break;
             case 'proprio_nova_rota':
-                $relationManagers[] = OrcamentoResource\RelationManagers\PropriosNovaRotaRelationManager::class;
+                // Seção Próprios - Nova Rota removida
+                // $relationManagers[] = OrcamentoResource\RelationManagers\PropriosNovaRotaRelationManager::class;
                 break;
         }
         
