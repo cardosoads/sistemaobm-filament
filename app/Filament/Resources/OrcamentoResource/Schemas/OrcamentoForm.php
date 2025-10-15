@@ -139,64 +139,7 @@ class OrcamentoForm
                     ])
                     ->columns(2)
                     ->columnSpanFull(),
-
-                Section::make('Configurações de Lucro e Impostos')
-                    ->schema([
-                        Components\TextInput::make('lucro_percentual')
-                            ->label('Lucro (%)')
-                            ->numeric()
-                            ->suffix('%')
-                            ->required()
-                            ->live()
-                            ->afterStateUpdated(function (Get $get, Set $set) {
-                                if ($get('tipo_orcamento') === 'prestador') {
-                                    self::calcularValoresPrestador($get, $set);
-                                } elseif ($get('tipo_orcamento') === 'aumento_km') {
-                                    self::calcularValoresAumentoKm($get, $set);
-                                } elseif ($get('tipo_orcamento') === 'proprio_nova_rota') {
-                                    self::calcularValoresProprioNovaRota($get, $set);
-                                }
-                            }),
-
-                        Components\TextInput::make('impostos_percentual')
-                            ->label('Impostos (%)')
-                            ->numeric()
-                            ->suffix('%')
-                            ->required()
-                            ->live()
-                            ->afterStateUpdated(function (Get $get, Set $set) {
-                                if ($get('tipo_orcamento') === 'prestador') {
-                                    self::calcularValoresPrestador($get, $set);
-                                } elseif ($get('tipo_orcamento') === 'aumento_km') {
-                                    self::calcularValoresAumentoKm($get, $set);
-                                } elseif ($get('tipo_orcamento') === 'proprio_nova_rota') {
-                                    self::calcularValoresProprioNovaRota($get, $set);
-                                }
-                            }),
-
-                        Components\Select::make('grupo_imposto_id')
-                            ->label('Grupo de Imposto')
-                            ->relationship('grupoImposto', 'nome')
-                            ->getOptionLabelFromRecordUsing(fn (\App\Models\GrupoImposto $record) => 
-                                $record->nome . ' (' . $record->percentual_total_formatado . ')'
-                            )
-                            ->searchable()
-                            ->preload()
-                            ->required()
-                            ->live()
-                            ->afterStateUpdated(function (Get $get, Set $set) {
-                                if ($get('tipo_orcamento') === 'prestador') {
-                                    self::calcularValoresPrestador($get, $set);
-                                } elseif ($get('tipo_orcamento') === 'aumento_km') {
-                                    self::calcularValoresAumentoKm($get, $set);
-                                } elseif ($get('tipo_orcamento') === 'proprio_nova_rota') {
-                                    self::calcularValoresProprioNovaRota($get, $set);
-                                }
-                            }),
-                    ])
-                    ->columns(3)
-                    ->columnSpanFull(),
-                    
+                   
                 // Seção condicional para Prestador
                 Section::make('Dados do Prestador')
                     ->schema([
@@ -499,6 +442,65 @@ class OrcamentoForm
                     ])
                     ->columnSpanFull()
                     ->visible(fn ($get) => $get('tipo_orcamento') === 'proprio_nova_rota'),
+
+
+            Section::make('Configurações de Lucro e Impostos')
+                ->schema([
+                    Components\TextInput::make('lucro_percentual')
+                        ->label('Lucro (%)')
+                        ->numeric()
+                        ->suffix('%')
+                        ->required()
+                        ->live()
+                        ->afterStateUpdated(function (Get $get, Set $set) {
+                            if ($get('tipo_orcamento') === 'prestador') {
+                                self::calcularValoresPrestador($get, $set);
+                            } elseif ($get('tipo_orcamento') === 'aumento_km') {
+                                self::calcularValoresAumentoKm($get, $set);
+                            } elseif ($get('tipo_orcamento') === 'proprio_nova_rota') {
+                                self::calcularValoresProprioNovaRota($get, $set);
+                            }
+                        }),
+
+                    Components\TextInput::make('impostos_percentual')
+                        ->label('Impostos (%)')
+                        ->numeric()
+                        ->suffix('%')
+                        ->required()
+                        ->live()
+                        ->afterStateUpdated(function (Get $get, Set $set) {
+                            if ($get('tipo_orcamento') === 'prestador') {
+                                self::calcularValoresPrestador($get, $set);
+                            } elseif ($get('tipo_orcamento') === 'aumento_km') {
+                                self::calcularValoresAumentoKm($get, $set);
+                            } elseif ($get('tipo_orcamento') === 'proprio_nova_rota') {
+                                self::calcularValoresProprioNovaRota($get, $set);
+                            }
+                        }),
+
+                    Components\Select::make('grupo_imposto_id')
+                        ->label('Grupo de Imposto')
+                        ->relationship('grupoImposto', 'nome')
+                        ->getOptionLabelFromRecordUsing(
+                            fn(\App\Models\GrupoImposto $record) =>
+                            $record->nome . ' (' . $record->percentual_total_formatado . ')'
+                        )
+                        ->searchable()
+                        ->preload()
+                        ->required()
+                        ->live()
+                        ->afterStateUpdated(function (Get $get, Set $set) {
+                            if ($get('tipo_orcamento') === 'prestador') {
+                                self::calcularValoresPrestador($get, $set);
+                            } elseif ($get('tipo_orcamento') === 'aumento_km') {
+                                self::calcularValoresAumentoKm($get, $set);
+                            } elseif ($get('tipo_orcamento') === 'proprio_nova_rota') {
+                                self::calcularValoresProprioNovaRota($get, $set);
+                            }
+                        }),
+                ])
+                ->columns(3)
+                ->columnSpanFull(),
 
                 Section::make('Valores')
                     ->schema([
