@@ -4,6 +4,7 @@ namespace App\Filament\Resources\OrcamentoResource\Pages;
 
 use App\Filament\Resources\OrcamentoResource;
 use Filament\Actions\EditAction;
+use Filament\Actions\Action;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Schema;
 
@@ -15,6 +16,10 @@ class ViewOrcamento extends ViewRecord
     {
         return [
             EditAction::make(),
+            Action::make('Exportar PDF')
+                ->url(route('orcamentos.pdf', $this->record))
+                ->openUrlInNewTab()
+                ->color('primary'),
         ];
     }
 

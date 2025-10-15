@@ -8,6 +8,7 @@
     "require": {
         "php": "^8.2",
         "ariaieboy/filament-currency": "^2.0",
+        "barryvdh/laravel-dompdf": "^3.1",
         "doctrine/dbal": "^4.3",
         "filament/filament": "^4.1",
         "filament/infolists": "^4.1",
