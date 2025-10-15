@@ -142,7 +142,7 @@ class OrcamentoForm
 
                 Section::make('Configurações de Lucro e Impostos')
                     ->schema([
-                        Components::TextInput::make('lucro_percentual')
+                        Components\TextInput::make('lucro_percentual')
                             ->label('Lucro (%)')
                             ->numeric()
                             ->suffix('%')
@@ -158,7 +158,7 @@ class OrcamentoForm
                                 }
                             }),
 
-                        Components::TextInput::make('impostos_percentual')
+                        Components\TextInput::make('impostos_percentual')
                             ->label('Impostos (%)')
                             ->numeric()
                             ->suffix('%')
@@ -174,7 +174,7 @@ class OrcamentoForm
                                 }
                             }),
 
-                        Components::Select::make('grupo_imposto_id')
+                        Components\Select::make('grupo_imposto_id')
                             ->label('Grupo de Imposto')
                             ->relationship('grupoImposto', 'nome')
                             ->getOptionLabelFromRecordUsing(fn (\App\Models\GrupoImposto $record) => 
