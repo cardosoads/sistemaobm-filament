@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             TipoVeiculoSeeder::class,
             MarcaSeeder::class,
             ImpostoSeeder::class,
+            PermissionSeeder::class,
             
             // Seeders que dependem de outros
             FrotaSeeder::class,          // Depende de TipoVeiculo
