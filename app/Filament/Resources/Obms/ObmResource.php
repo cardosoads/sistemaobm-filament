@@ -80,4 +80,20 @@ class ObmResource extends Resource
             'Status' => $record->status_label,
         ];
     }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        $user = auth()->user();
+        if (! $user) {
+            return false;
+        }
+
+        return $user->hasAnyRole([
+            'Administrador',
+            'Gerente',
+            'Fornecedor',
+            'Recursos Humanos',
+            'Frotas',
+        ]);
+    }
 }
