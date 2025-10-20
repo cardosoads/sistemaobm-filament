@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             MarcaSeeder::class,
             ImpostoSeeder::class,
             PermissionSeeder::class,
+            RoleSeeder::class,
             
             // Seeders que dependem de outros
             FrotaSeeder::class,          // Depende de TipoVeiculo
@@ -33,3 +34,4 @@ class DatabaseSeeder extends Seeder
         $this->command->info('Todos os seeders foram executados com sucesso!');
     }
 }
+
