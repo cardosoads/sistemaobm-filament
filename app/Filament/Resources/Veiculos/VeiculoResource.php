@@ -50,4 +50,14 @@ class VeiculoResource extends Resource
             'edit' => EditVeiculo::route('/{record}/edit'),
         ];
     }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        $user = auth()->user();
+        if (! $user) {
+            return false;
+        }
+
+        return $user->hasAnyRole(['Administrador', 'Frotas']);
+    }
 }

@@ -52,4 +52,14 @@ class ColaboradorResource extends Resource
             'edit' => EditColaborador::route('/{record}/edit'),
         ];
     }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        $user = auth()->user();
+        if (! $user) {
+            return false;
+        }
+
+        return $user->hasAnyRole(['Administrador', 'Recursos Humanos']);
+    }
 }

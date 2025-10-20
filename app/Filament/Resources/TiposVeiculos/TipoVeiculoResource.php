@@ -56,4 +56,14 @@ class TipoVeiculoResource extends Resource
             'edit' => EditTipoVeiculo::route('/{record}/edit'),
         ];
     }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        $user = auth()->user();
+        if (! $user) {
+            return false;
+        }
+
+        return $user->hasAnyRole(['Administrador', 'Frotas']);
+    }
 }
