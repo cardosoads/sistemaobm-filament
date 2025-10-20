@@ -31,7 +31,13 @@ class DatabaseSeeder extends Seeder
             GrupoImpostoSeeder::class,   // Depende de Imposto
         ]);
 
+        // Atribuir role 'Administrador' a todos os usuários existentes
+        foreach (\App\Models\User::all() as $user) {
+            if (! $user->hasRole('Administrador')) {
+                $user->assignRole('Administrador');
+            }
+        }
+
         $this->command->info('Todos os seeders foram executados com sucesso!');
     }
 }
-

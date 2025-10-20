@@ -13,11 +13,20 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        User::create([
+        $user = User::firstOrCreate(
+            ['email' => 'admin@sistemaobm.com'],
+            [
+                'name' => 'Admin',
+                'password' => Hash::make('admin123'),
+                'email_verified_at' => now(),
+            ]
+        );
+
+        // Garantir dados atualizados caso já exista
+        $user->forceFill([
             'name' => 'Admin',
-            'email' => 'admin@sistemaobm.com',
             'password' => Hash::make('admin123'),
-            'email_verified_at' => now(),
-        ]);
+            'email_verified_at' => $user->email_verified_at ?? now(),
+        ])->save();
     }
 }
