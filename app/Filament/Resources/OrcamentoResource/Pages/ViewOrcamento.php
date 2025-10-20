@@ -21,6 +21,7 @@ class ViewOrcamento extends ViewRecord
                 ->color('danger')
                 ->icon('heroicon-o-document-arrow-down')
                 ->tooltip('Exportar orçamento em formato PDF')
+                ->visible(fn () => auth()->user()?->can('orcamentos.exportar_pdf'))
                 ->badge()
                 ->extraAttributes(['class' => 'bg-red-600 hover:bg-red-700'])
                 ->label(''),
