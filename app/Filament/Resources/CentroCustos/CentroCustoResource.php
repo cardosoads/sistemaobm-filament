@@ -53,4 +53,14 @@ class CentroCustoResource extends Resource
             'edit' => EditCentroCusto::route('/{record}/edit'),
         ];
     }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        $user = auth()->user();
+        if (! $user) {
+            return false;
+        }
+
+        return $user->hasRole('Administrador');
+    }
 }

@@ -55,4 +55,14 @@ class OrcamentoResource extends Resource
             'edit' => Pages\EditOrcamento::route('/{record}/edit'),
         ];
     }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        $user = auth()->user();
+        if (! $user) {
+            return false;
+        }
+
+        return $user->hasAnyRole(['Administrador', 'Gerente', 'Orçamento']);
+    }
 }

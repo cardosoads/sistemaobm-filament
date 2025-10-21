@@ -65,4 +65,14 @@ class BaseResource extends Resource
     {
         return 'Bases';
     }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        $user = auth()->user();
+        if (! $user) {
+            return false;
+        }
+
+        return $user->hasRole('Administrador');
+    }
 }

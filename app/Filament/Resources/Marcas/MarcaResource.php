@@ -56,4 +56,14 @@ class MarcaResource extends Resource
             'edit' => Pages\EditMarca::route('/{record}/edit'),
         ];
     }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        $user = auth()->user();
+        if (! $user) {
+            return false;
+        }
+
+        return $user->hasRole('Administrador');
+    }
 }

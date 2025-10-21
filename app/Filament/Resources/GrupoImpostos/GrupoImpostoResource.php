@@ -48,4 +48,14 @@ class GrupoImpostoResource extends Resource
             'edit' => EditGrupoImposto::route('/{record}/edit'),
         ];
     }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        $user = auth()->user();
+        if (! $user) {
+            return false;
+        }
+
+        return $user->hasRole('Administrador');
+    }
 }

@@ -21,12 +21,19 @@ class Obm extends Model
         'data_fim',
         'status',
         'observacoes',
+        // Campos consolidados do orçamento
+        'nome_rota',
+        'cliente_nome',
+        'origem',
+        'destino',
+        'valor_final',
     ];
 
     protected $casts = [
         'data_inicio' => 'date',
         'data_fim' => 'date',
         'observacoes' => 'string',
+        'valor_final' => 'decimal:2',
     ];
 
     protected $dates = [
@@ -81,67 +88,37 @@ class Obm extends Model
         return $query->where('colaborador_id', $colaboradorId);
     }
 
-    public function scopePorVeiculo($query, $frotaId)
+    // -------------------------
+    // Consolidação de dados
+    // -------------------------
+    public function consolidarDadosOrcamento(): void
     {
-        return $query->where('frota_id', $frotaId);
-    }
-
-    // Validações
-    public static function validarSobreposicaoColaborador($colaboradorId, $dataInicio, $dataFim, $ignoreId = null): bool
-    {
-        $query = self::where('colaborador_id', $colaboradorId)
-            ->where(function ($q) use ($dataInicio, $dataFim) {
-                $q->where(function ($q) use ($dataInicio, $dataFim) {
-                    $q->where('data_inicio', '<=', $dataInicio)
-                      ->where('data_fim', '>=', $dataInicio);
-                })->orWhere(function ($q) use ($dataInicio, $dataFim) {
-                    $q->where('data_inicio', '<=', $dataFim)
-                      ->where('data_fim', '>=', $dataFim);
-                })->orWhere(function ($q) use ($dataInicio, $dataFim) {
-                    $q->where('data_inicio', '>=', $dataInicio)
-                      ->where('data_fim', '<=', $dataFim);
-                });
-            })
-            ->whereIn('status', ['pendente', 'em_andamento']);
-
-        if ($ignoreId) {
-            $query->where('id', '!=', $ignoreId);
+        $orcamento = $this->orcamento;
+        if (!$orcamento) {
+            return;
         }
 
-        return !$query->exists();
+        $this->nome_rota = $orcamento->nome_rota;
+        $this->cliente_nome = $orcamento->cliente_nome ?? optional($orcamento->clienteFornecedor)->nome;
+        $this->valor_final = $orcamento->valor_final;
+
+        // Origem/Destino podem não existir; manter seguros
+        // Como o projeto removeu origem/destino do modelo de nova rota, deixamos nulos
+        $this->origem = $orcamento->origem ?? null;
+        $this->destino = $orcamento->destino ?? null;
+
+        $this->save();
     }
 
-    public static function validarSobreposicaoVeiculo($frotaId, $dataInicio, $dataFim, $ignoreId = null): bool
-    {
-        $query = self::where('frota_id', $frotaId)
-            ->where(function ($q) use ($dataInicio, $dataFim) {
-                $q->where(function ($q) use ($dataInicio, $dataFim) {
-                    $q->where('data_inicio', '<=', $dataInicio)
-                      ->where('data_fim', '>=', $dataInicio);
-                })->orWhere(function ($q) use ($dataInicio, $dataFim) {
-                    $q->where('data_inicio', '<=', $dataFim)
-                      ->where('data_fim', '>=', $dataFim);
-                })->orWhere(function ($q) use ($dataInicio, $dataFim) {
-                    $q->where('data_inicio', '>=', $dataInicio)
-                      ->where('data_fim', '<=', $dataFim);
-                });
-            })
-            ->whereIn('status', ['pendente', 'em_andamento']);
-
-        if ($ignoreId) {
-            $query->where('id', '!=', $ignoreId);
-        }
-
-        return !$query->exists();
-    }
-
-    // Acessores
+    // -------------------------
+    // Métodos auxiliares existentes (resumo do período e status)
+    // -------------------------
     public function getPeriodoAttribute(): string
     {
         if (!$this->data_inicio || !$this->data_fim) {
-            return '';
+            return '-';
         }
-        return $this->data_inicio->format('d/m/Y') . ' - ' . $this->data_fim->format('d/m/Y');
+        return $this->data_inicio->format('d/m/Y') . ' a ' . $this->data_fim->format('d/m/Y');
     }
 
     public function getDuracaoDiasAttribute(): int
@@ -154,49 +131,44 @@ class Obm extends Model
 
     public function getStatusLabelAttribute(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             'pendente' => 'Pendente',
             'em_andamento' => 'Em Andamento',
             'concluida' => 'Concluída',
-            default => $this->status,
+            default => ucfirst($this->status ?? 'Indefinido'),
         };
     }
 
     public function getStatusColorAttribute(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             'pendente' => 'warning',
-            'em_andamento' => 'primary',
+            'em_andamento' => 'info',
             'concluida' => 'success',
             default => 'gray',
         };
     }
 
-
-
     public function podeIniciar(): bool
     {
-        return $this->status === 'pendente' && 
-               $this->colaborador_id && 
-               $this->frota_id &&
-               ($this->data_inicio ? $this->data_inicio <= now() : false);
+        return $this->status === 'pendente';
     }
 
     public function iniciar(): bool
     {
-        if ($this->podeIniciar()) {
-            $this->status = 'em_andamento';
-            return $this->save();
+        if (!$this->podeIniciar()) {
+            return false;
         }
-        return false;
+        $this->status = 'em_andamento';
+        return $this->save();
     }
 
     public function concluir(): bool
     {
-        if ($this->status === 'em_andamento') {
-            $this->status = 'concluida';
-            return $this->save();
+        if ($this->status !== 'em_andamento') {
+            return false;
         }
-        return false;
+        $this->status = 'concluida';
+        return $this->save();
     }
 }
