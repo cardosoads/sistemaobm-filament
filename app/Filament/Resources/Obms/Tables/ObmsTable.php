@@ -27,25 +27,84 @@ class ObmsTable
                     ->label('Rota')
                     ->sortable()
                     ->searchable()
-                    ->description(fn ($record) => $record->orcamento?->origem . ' → ' . $record->orcamento?->destino),
+                    ->description(fn ($record) => 
+                        $record->orcamento?->origem && $record->orcamento?->destino 
+                            ? $record->orcamento->origem . ' → ' . $record->orcamento->destino
+                            : ($record->origem && $record->destino 
+                                ? $record->origem . ' → ' . $record->destino 
+                                : 'Origem/Destino não informado')
+                    ),
 
                 Columns\TextColumn::make('orcamento.cliente_nome')
                     ->label('Cliente')
                     ->sortable()
                     ->searchable()
+                    ->toggleable()
+                    ->description(fn ($record) => 
+                        $record->orcamento?->clienteFornecedor?->nome_fantasia ?? ''
+                    ),
+
+                Columns\TextColumn::make('orcamento.tipo_orcamento')
+                    ->label('Tipo')
+                    ->sortable()
+                    ->searchable()
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'prestador' => 'Prestador',
+                        'aumento_km' => 'Aumento KM',
+                        'proprio_nova_rota' => 'Nova Rota',
+                        default => ucfirst(str_replace('_', ' ', $state)),
+                    })
+                    ->badge()
+                    ->color(fn ($state) => match($state) {
+                        'prestador' => 'info',
+                        'aumento_km' => 'warning',
+                        'proprio_nova_rota' => 'success',
+                        default => 'gray',
+                    }),
+
+                Columns\TextColumn::make('prestador_nome')
+                    ->label('Prestador')
+                    ->sortable()
+                    ->searchable()
+                    ->getStateUsing(function ($record) {
+                        // Buscar prestador do orçamento
+                        $orcamento = $record->orcamento;
+                        if (!$orcamento || $orcamento->tipo_orcamento !== 'prestador') {
+                            return null;
+                        }
+                        
+                        // Buscar o primeiro prestador do orçamento
+                        $prestador = $orcamento->prestadores()->with('fornecedor')->first();
+                        if ($prestador && $prestador->fornecedor) {
+                            return $prestador->fornecedor->razao_social;
+                        }
+                        
+                        return null;
+                    })
+                    ->placeholder('N/A')
                     ->toggleable(),
 
                 Columns\TextColumn::make('colaborador.nome')
                     ->label('Colaborador')
                     ->sortable()
                     ->searchable()
-                    ->description(fn ($record) => $record->colaborador?->cargo ?? ''),
+                    ->description(fn ($record) => $record->colaborador?->cargo ?? '')
+                    ->placeholder('N/A')
+                    ->visible(fn ($record) => 
+                        !$record || !$record->orcamento || 
+                        !in_array($record->orcamento->tipo_orcamento, ['prestador', 'aumento_km'])
+                    ),
 
                 Columns\TextColumn::make('frota.tipoVeiculo.nome')
                     ->label('Veículo')
                     ->sortable()
                     ->searchable()
-                    ->description(fn ($record) => $record->frota?->fipe ?? ''),
+                    ->description(fn ($record) => $record->frota?->fipe ?? '')
+                    ->placeholder('N/A')
+                    ->visible(fn ($record) => 
+                        !$record || !$record->orcamento || 
+                        !in_array($record->orcamento->tipo_orcamento, ['prestador', 'aumento_km'])
+                    ),
 
                 Columns\TextColumn::make('data_inicio')
                     ->label('Início')
@@ -111,6 +170,16 @@ class ObmsTable
                         'pendente' => 'Pendente',
                         'em_andamento' => 'Em Andamento',
                         'concluida' => 'Concluída',
+                    ])
+                    ->multiple(),
+
+                SelectFilter::make('tipo_orcamento')
+                    ->label('Tipo de Orçamento')
+                    ->relationship('orcamento', 'tipo_orcamento')
+                    ->options([
+                        'prestador' => 'Prestador',
+                        'aumento_km' => 'Aumento KM',
+                        'proprio_nova_rota' => 'Nova Rota',
                     ])
                     ->multiple(),
 

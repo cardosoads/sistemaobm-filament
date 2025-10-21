@@ -77,7 +77,24 @@ class ObmForm
                             )
                             ->searchable(['nome'])
                             ->preload()
-                            ->required()
+                            ->required(function (Get $get) {
+                                $orcamentoId = $get('orcamento_id');
+                                if (!$orcamentoId) return true;
+                                
+                                $orcamento = Orcamento::find($orcamentoId);
+                                if (!$orcamento) return true;
+                                
+                                return !in_array($orcamento->tipo_orcamento, ['prestador', 'aumento_km']);
+                            })
+                            ->visible(function (Get $get) {
+                                $orcamentoId = $get('orcamento_id');
+                                if (!$orcamentoId) return true;
+                                
+                                $orcamento = Orcamento::find($orcamentoId);
+                                if (!$orcamento) return true;
+                                
+                                return !in_array($orcamento->tipo_orcamento, ['prestador', 'aumento_km']);
+                            })
                             ->reactive()
                             ->helperText('O colaborador não pode ter sobreposição de datas com outras OBMs'),
 
@@ -101,6 +118,15 @@ class ObmForm
                                 \App\Models\Veiculo::find($value)?->placa ?? $value
                             )
                             ->reactive()
+                            ->visible(function (Get $get) {
+                                $orcamentoId = $get('orcamento_id');
+                                if (!$orcamentoId) return true;
+                                
+                                $orcamento = Orcamento::find($orcamentoId);
+                                if (!$orcamento) return true;
+                                
+                                return !in_array($orcamento->tipo_orcamento, ['prestador', 'aumento_km']);
+                            })
                             ->afterStateUpdated(function (Set $set, $state) {
                                 if ($state) {
                                     $veiculo = \App\Models\Veiculo::find($state);
@@ -154,7 +180,24 @@ class ObmForm
                             )
                             ->searchable()
                             ->preload()
-                            ->required()
+                            ->required(function (Get $get) {
+                                $orcamentoId = $get('orcamento_id');
+                                if (!$orcamentoId) return true;
+                                
+                                $orcamento = Orcamento::find($orcamentoId);
+                                if (!$orcamento) return true;
+                                
+                                return !in_array($orcamento->tipo_orcamento, ['prestador', 'aumento_km']);
+                            })
+                            ->visible(function (Get $get) {
+                                $orcamentoId = $get('orcamento_id');
+                                if (!$orcamentoId) return true;
+                                
+                                $orcamento = Orcamento::find($orcamentoId);
+                                if (!$orcamento) return true;
+                                
+                                return !in_array($orcamento->tipo_orcamento, ['prestador', 'aumento_km']);
+                            })
                             ->reactive()
                             ->disabled(fn (Get $get) => !$get('orcamento_id') && !$get('veiculo_busca'))
                             ->helperText('Selecione um orçamento OU busque por placa/RENAVAM'),
@@ -172,8 +215,34 @@ class ObmForm
                             ])
                             ->required()
                             ->default('pendente')
-                            ->disabled(fn (Get $get) => !$get('colaborador_id') || !$get('frota_id'))
-                            ->helperText('Status será bloqueado até selecionar colaborador e veículo'),
+                            ->disabled(function (Get $get) {
+                                $orcamentoId = $get('orcamento_id');
+                                if (!$orcamentoId) return true;
+                                
+                                $orcamento = Orcamento::find($orcamentoId);
+                                if (!$orcamento) return true;
+                                
+                                // Para prestador e aumento_km, não precisa de colaborador e veículo
+                                if (in_array($orcamento->tipo_orcamento, ['prestador', 'aumento_km'])) {
+                                    return false;
+                                }
+                                
+                                // Para outros tipos, precisa de colaborador e veículo
+                                return !$get('colaborador_id') || !$get('frota_id');
+                            })
+                            ->helperText(function (Get $get) {
+                                $orcamentoId = $get('orcamento_id');
+                                if (!$orcamentoId) return 'Selecione um orçamento primeiro';
+                                
+                                $orcamento = Orcamento::find($orcamentoId);
+                                if (!$orcamento) return 'Orçamento não encontrado';
+                                
+                                if (in_array($orcamento->tipo_orcamento, ['prestador', 'aumento_km'])) {
+                                    return 'Status disponível para orçamentos de prestador e aumento KM';
+                                }
+                                
+                                return 'Status será bloqueado até selecionar colaborador e veículo';
+                            }),
 
                         Components\Textarea::make('observacoes')
                             ->label('Observações')
