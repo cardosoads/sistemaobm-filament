@@ -19,15 +19,7 @@ class ObmResource extends Resource
 {
     protected static ?string $model = Obm::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-truck';
-    
-    protected static string | \UnitEnum | null $navigationGroup = 'Operações';
-    
-    protected static ?string $navigationLabel = 'OBMs - Ordens de Movimentação';
-    
-    protected static ?string $modelLabel = 'OBM';
-    
-    protected static ?string $pluralModelLabel = 'OBMs';
+    protected static string | BackedEnum | null $navigationIcon = Heroicon::Document;
 
     public static function form(Schema $schema): Schema
     {
@@ -57,16 +49,29 @@ class ObmResource extends Resource
     
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
+        $query = parent::getEloquentQuery()
             ->with(['orcamento', 'colaborador', 'frota', 'user']);
+
+        $user = auth()->user();
+        if ($user) {
+            if ($user->hasAnyRole(['Frotas'])) {
+                // Ver OBMs pendentes de definição de veículo (frota_id nulo), independentemente do colaborador
+                $query->whereNull('frota_id');
+            } elseif ($user->hasAnyRole(['Recursos Humanos', 'RH'])) {
+                // Ver OBMs pendentes de definição de colaborador (colaborador_id nulo), independentemente do veículo
+                $query->whereNull('colaborador_id');
+            }
+        }
+
+        return $query;
     }
-    
+
     public static function getGloballySearchableAttributes(): array
     {
         // Busca nos campos relacionados do orçamento
         return ['orcamento.nome_rota', 'orcamento.cliente_nome'];
     }
-    
+
     public static function getGlobalSearchResultDetails($record): array
     {
         return [

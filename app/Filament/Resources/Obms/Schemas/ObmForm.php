@@ -38,32 +38,34 @@ class ObmForm
                             ->preload()
                             ->required()
                             ->reactive()
+                            ->disabled(fn () => auth()->user()?->hasAnyRole(['Recursos Humanos', 'Frotas']))
+                            ->dehydrated(fn () => !auth()->user()?->hasAnyRole(['Recursos Humanos', 'Frotas']))
                             ->afterStateUpdated(function (Set $set, Get $get, $state) {
                                 // Limpar o campo de veículo quando o orçamento mudar
                                 $set('frota_id', null);
                                 // Dados do orçamento serão exibidos via relacionamento; não preencher campos na OBM.
                             })
                             ,
-                    ]),
 
-                SchemaComponents\Section::make('Execução da Rota')
-                    ->columnSpanFull()
-                    ->schema([
                         Components\DatePicker::make('data_inicio')
                             ->label('Data Início')
                             ->nullable()
                             ->native(false)
                             ->closeOnDateSelection()
-                            ->minDate(now())
-                            ->reactive(),
+                            ->minDate(fn () => auth()->user()?->hasAnyRole(['Recursos Humanos', 'Frotas']) ? null : now())
+                            ->reactive()
+                            ->disabled(fn () => auth()->user()?->hasAnyRole(['Recursos Humanos', 'Frotas']))
+                            ->dehydrated(fn () => !auth()->user()?->hasAnyRole(['Recursos Humanos', 'Frotas'])),
 
                         Components\DatePicker::make('data_fim')
                             ->label('Data Fim')
                             ->nullable()
                             ->native(false)
                             ->closeOnDateSelection()
-                            ->minDate(fn (Get $get) => $get('data_inicio') ?: now())
-                            ->reactive(),
+                            ->minDate(fn (Get $get) => auth()->user()?->hasAnyRole(['Recursos Humanos', 'Frotas']) ? null : ($get('data_inicio') ?: now()))
+                            ->reactive()
+                            ->disabled(fn () => auth()->user()?->hasAnyRole(['Recursos Humanos', 'Frotas']))
+                            ->dehydrated(fn () => !auth()->user()?->hasAnyRole(['Recursos Humanos', 'Frotas'])),
 
                         Components\Select::make('colaborador_id')
                             ->label('Colaborador')
@@ -78,6 +80,10 @@ class ObmForm
                             ->searchable(['nome'])
                             ->preload()
                             ->required(function (Get $get) {
+                                // Para roles RH/Frotas, não exigir colaborador
+                                if (auth()->user()?->hasAnyRole(['Recursos Humanos', 'Frotas'])) {
+                                    return false;
+                                }
                                 $orcamentoId = $get('orcamento_id');
                                 if (!$orcamentoId) return true;
                                 
@@ -96,6 +102,8 @@ class ObmForm
                                 return !in_array($orcamento->tipo_orcamento, ['prestador', 'aumento_km']);
                             })
                             ->reactive()
+                            ->disabled(fn () => auth()->user()?->hasAnyRole(['Recursos Humanos', 'Frotas']))
+                            ->dehydrated(fn () => !auth()->user()?->hasAnyRole(['Recursos Humanos', 'Frotas']))
                             ->helperText('O colaborador não pode ter sobreposição de datas com outras OBMs'),
 
                         Components\Select::make('veiculo_busca')
@@ -127,6 +135,7 @@ class ObmForm
                                 
                                 return !in_array($orcamento->tipo_orcamento, ['prestador', 'aumento_km']);
                             })
+                            ->disabled(fn () => auth()->user()?->hasRole('Recursos Humanos'))
                             ->afterStateUpdated(function (Set $set, $state) {
                                 if ($state) {
                                     $veiculo = \App\Models\Veiculo::find($state);
@@ -143,69 +152,7 @@ class ObmForm
                             })
                             ->helperText('Busque por placa ou RENAVAM para encontrar o veículo'),
 
-                        Components\Select::make('frota_id')
-                            ->label('Veículo da Frota')
-                            ->placeholder('Selecione o veículo da frota')
-                            ->relationship('frota', 'id', function (Builder $query, Get $get) {
-                                $orcamentoId = $get('orcamento_id');
-                                $veiculoBuscaId = $get('veiculo_busca');
-                                
-                                if ($veiculoBuscaId) {
-                                    // Se há uma busca por veículo, filtrar por tipo de veículo
-                                    $veiculo = \App\Models\Veiculo::find($veiculoBuscaId);
-                                    if ($veiculo && $veiculo->tipo_veiculo_id) {
-                                        $query->where('tipo_veiculo_id', $veiculo->tipo_veiculo_id);
-                                    }
-                                } elseif ($orcamentoId) {
-                                    // Buscar o frota_id do orçamento selecionado
-                                    $orcamento = \App\Models\Orcamento::find($orcamentoId);
-                                    if ($orcamento && $orcamento->frota_id) {
-                                        $query->where('id', $orcamento->frota_id);
-                                    } else {
-                                        // Se o orçamento não tem frota associada, não mostrar nenhum veículo
-                                        $query->where('id', 0);
-                                    }
-                                } else {
-                                    // Se não há orçamento selecionado, não mostrar nenhum veículo
-                                    $query->where('id', 0);
-                                }
-                                
-                                $query->where('active', true)
-                                      ->with(['tipoVeiculo'])
-                                      ->orderBy('tipo_veiculo_id');
-                            })
-                            ->getOptionLabelFromRecordUsing(fn ($record) => 
-                                "{$record->tipoVeiculo->nome} - {$record->fipe} - " . 
-                                number_format($record->custo_total, 2, ',', '.')
-                            )
-                            ->searchable()
-                            ->preload()
-                            ->required(function (Get $get) {
-                                $orcamentoId = $get('orcamento_id');
-                                if (!$orcamentoId) return true;
-                                
-                                $orcamento = Orcamento::find($orcamentoId);
-                                if (!$orcamento) return true;
-                                
-                                return !in_array($orcamento->tipo_orcamento, ['prestador', 'aumento_km']);
-                            })
-                            ->visible(function (Get $get) {
-                                $orcamentoId = $get('orcamento_id');
-                                if (!$orcamentoId) return true;
-                                
-                                $orcamento = Orcamento::find($orcamentoId);
-                                if (!$orcamento) return true;
-                                
-                                return !in_array($orcamento->tipo_orcamento, ['prestador', 'aumento_km']);
-                            })
-                            ->reactive()
-                            ->disabled(fn (Get $get) => !$get('orcamento_id') && !$get('veiculo_busca'))
-                            ->helperText('Selecione um orçamento OU busque por placa/RENAVAM'),
-                    ]),
 
-                SchemaComponents\Section::make('Status e Observações')
-                    ->columnSpanFull()
-                    ->schema([
                         Components\Select::make('status')
                             ->label('Status')
                             ->options([
@@ -216,6 +163,9 @@ class ObmForm
                             ->required()
                             ->default('pendente')
                             ->disabled(function (Get $get) {
+                                if (auth()->user()?->hasAnyRole(['Recursos Humanos', 'Frotas'])) {
+                                    return true;
+                                }
                                 $orcamentoId = $get('orcamento_id');
                                 if (!$orcamentoId) return true;
                                 
@@ -247,10 +197,11 @@ class ObmForm
                         Components\Textarea::make('observacoes')
                             ->label('Observações')
                             ->placeholder('Informações adicionais sobre a execução da OBM')
-                            ->rows(3),
-                    ]),
+                            ->rows(3)
+                            ->disabled(fn () => auth()->user()?->hasAnyRole(['Recursos Humanos', 'Frotas']))
+                            ->dehydrated(fn () => !auth()->user()?->hasAnyRole(['Recursos Humanos', 'Frotas']))
 
-
-            ]);
-    }
-}
+                    ])
+             ]);
+     }
+ }

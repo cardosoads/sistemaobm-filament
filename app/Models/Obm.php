@@ -171,4 +171,65 @@ class Obm extends Model
         $this->status = 'concluida';
         return $this->save();
     }
+
+    // -------------------------
+    // Validações de sobreposição
+    // -------------------------
+    public static function validarSobreposicaoColaborador(int $colaboradorId, $dataInicio, $dataFim = null, ?int $ignorarObmId = null): bool
+    {
+        $inicio = $dataInicio instanceof Carbon ? $dataInicio : Carbon::parse($dataInicio);
+        $fim = $dataFim ? ($dataFim instanceof Carbon ? $dataFim : Carbon::parse($dataFim)) : null;
+
+        $query = static::query()
+            ->where('colaborador_id', $colaboradorId)
+            ->whereIn('status', ['pendente', 'em_andamento']);
+
+        if ($ignorarObmId) {
+            $query->where('id', '!=', $ignorarObmId);
+        }
+
+        $query->where(function ($q) use ($inicio, $fim) {
+            if ($fim) {
+                $q->whereDate('data_inicio', '<=', $fim);
+            }
+
+            $q->where(function ($q2) use ($inicio) {
+                $q2->whereNull('data_fim')
+                    ->orWhereDate('data_fim', '>=', $inicio);
+            });
+        });
+
+        $existeSobreposicao = $query->exists();
+
+        return !$existeSobreposicao; // true quando NÃO há sobreposição
+    }
+
+    public static function validarSobreposicaoVeiculo(int $frotaId, $dataInicio, $dataFim = null, ?int $ignorarObmId = null): bool
+    {
+        $inicio = $dataInicio instanceof Carbon ? $dataInicio : Carbon::parse($dataInicio);
+        $fim = $dataFim ? ($dataFim instanceof Carbon ? $dataFim : Carbon::parse($dataFim)) : null;
+
+        $query = static::query()
+            ->where('frota_id', $frotaId)
+            ->whereIn('status', ['pendente', 'em_andamento']);
+
+        if ($ignorarObmId) {
+            $query->where('id', '!=', $ignorarObmId);
+        }
+
+        $query->where(function ($q) use ($inicio, $fim) {
+            if ($fim) {
+                $q->whereDate('data_inicio', '<=', $fim);
+            }
+
+            $q->where(function ($q2) use ($inicio) {
+                $q2->whereNull('data_fim')
+                    ->orWhereDate('data_fim', '>=', $inicio);
+            });
+        });
+
+        $existeSobreposicao = $query->exists();
+
+        return !$existeSobreposicao; // true quando NÃO há sobreposição
+    }
 }

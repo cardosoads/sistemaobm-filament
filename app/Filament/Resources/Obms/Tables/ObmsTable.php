@@ -11,6 +11,9 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use App\Filament\Resources\OrcamentoResource; // import para linkar orçamento
+use pxlrbt\FilamentExcel\Actions\Tables\ExportAction; // exportação Excel
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
 
 class ObmsTable
 {
@@ -23,15 +26,23 @@ class ObmsTable
                     ->sortable()
                     ->searchable(),
 
+                Columns\TextColumn::make('orcamento.numero_orcamento')
+                    ->label('Número do Orçamento')
+                    ->sortable()
+                    ->searchable()
+                    ->toggleable()
+                    ->url(fn ($record) => $record ? OrcamentoResource::getUrl('edit', ['record' => $record->orcamento_id]) : null)
+                    ->openUrlInNewTab(),
+
                 Columns\TextColumn::make('orcamento.nome_rota')
                     ->label('Rota')
                     ->sortable()
                     ->searchable()
                     ->description(fn ($record) => 
-                        $record->orcamento?->origem && $record->orcamento?->destino 
-                            ? $record->orcamento->origem . ' → ' . $record->orcamento->destino
-                            : ($record->origem && $record->destino 
-                                ? $record->origem . ' → ' . $record->destino 
+                        $record?->orcamento?->origem && $record?->orcamento?->destino 
+                            ? ($record?->orcamento?->origem . ' → ' . $record?->orcamento?->destino)
+                            : ($record?->origem && $record?->destino 
+                                ? ($record?->origem . ' → ' . $record?->destino)
                                 : 'Origem/Destino não informado')
                     ),
 
@@ -41,7 +52,7 @@ class ObmsTable
                     ->searchable()
                     ->toggleable()
                     ->description(fn ($record) => 
-                        $record->orcamento?->clienteFornecedor?->nome_fantasia ?? ''
+                        $record?->orcamento?->clienteFornecedor?->nome_fantasia ?? ''
                     ),
 
                 Columns\TextColumn::make('orcamento.tipo_orcamento')
@@ -67,18 +78,14 @@ class ObmsTable
                     ->sortable()
                     ->searchable()
                     ->getStateUsing(function ($record) {
-                        // Buscar prestador do orçamento
-                        $orcamento = $record->orcamento;
+                        $orcamento = $record?->orcamento;
                         if (!$orcamento || $orcamento->tipo_orcamento !== 'prestador') {
                             return null;
                         }
-                        
-                        // Buscar o primeiro prestador do orçamento
                         $prestador = $orcamento->prestadores()->with('fornecedor')->first();
                         if ($prestador && $prestador->fornecedor) {
                             return $prestador->fornecedor->razao_social;
                         }
-                        
                         return null;
                     })
                     ->placeholder('N/A')
@@ -88,7 +95,7 @@ class ObmsTable
                     ->label('Colaborador')
                     ->sortable()
                     ->searchable()
-                    ->description(fn ($record) => $record->colaborador?->cargo ?? '')
+                    ->description(fn ($record) => $record?->colaborador?->cargo ?? '')
                     ->placeholder('N/A')
                     ->visible(fn ($record) => 
                         !$record || !$record->orcamento || 
@@ -99,7 +106,7 @@ class ObmsTable
                     ->label('Veículo')
                     ->sortable()
                     ->searchable()
-                    ->description(fn ($record) => $record->frota?->fipe ?? '')
+                    ->description(fn ($record) => $record?->frota?->fipe ?? '')
                     ->placeholder('N/A')
                     ->visible(fn ($record) => 
                         !$record || !$record->orcamento || 
@@ -140,10 +147,46 @@ class ObmsTable
                     }),
 
                 Columns\TextColumn::make('valor_final')
-                    ->label('Valor')
+                    ->label('Valor Cobrado')
                     ->money('BRL')
                     ->sortable()
                     ->toggleable(),
+
+                Columns\TextColumn::make('custo_fornecedor')
+                    ->label('Custo do Fornecedor')
+                    ->state(function ($record) {
+                        $orcamento = $record?->orcamento;
+                        if (!$orcamento) {
+                            return null;
+                        }
+                        
+                        switch ($orcamento->tipo_orcamento) {
+                            case 'prestador':
+                                $prestador = $orcamento->prestadores()->select('custo_fornecedor')->first();
+                                return $prestador?->custo_fornecedor;
+                                
+                            case 'proprio_nova_rota':
+                                $proprioNovaRota = $orcamento->propriosNovaRota()->select('fornecedor_custo')->first();
+                                return $proprioNovaRota?->fornecedor_custo;
+                                
+                            case 'aumento_km':
+                                // Para aumento_km, pode não ter custo de fornecedor específico
+                                return null;
+                                
+                            default:
+                                return null;
+                        }
+                    })
+                    ->money('BRL')
+                    ->sortable(query: function (Builder $query, string $direction): Builder {
+                        return $query
+                            ->leftJoin('orcamento_prestador', 'orcamento_prestador.orcamento_id', '=', 'obms.orcamento_id')
+                            ->leftJoin('orcamento_proprio_nova_rota', 'orcamento_proprio_nova_rota.orcamento_id', '=', 'obms.orcamento_id')
+                            ->orderByRaw("COALESCE(orcamento_prestador.custo_fornecedor, orcamento_proprio_nova_rota.fornecedor_custo) {$direction}")
+                            ->select('obms.*');
+                    })
+                    ->toggleable()
+                    ->placeholder('N/A'),
 
                 Columns\TextColumn::make('user.name')
                     ->label('Criado por')
@@ -238,10 +281,43 @@ class ObmsTable
                             fn (Builder $query, $id): Builder => $query->where('frota_id', $id),
                         );
                     }),
+
+                Filter::make('custo_fornecedor')
+                    ->label('Custo do Fornecedor')
+                    ->form([
+                        \Filament\Forms\Components\TextInput::make('min')
+                            ->label('Mínimo')
+                            ->numeric(),
+                        \Filament\Forms\Components\TextInput::make('max')
+                            ->label('Máximo')
+                            ->numeric(),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->leftJoin('orcamento_prestador', 'orcamento_prestador.orcamento_id', '=', 'obms.orcamento_id')
+                            ->when(
+                                $data['min'] ?? null,
+                                fn (Builder $q, $min): Builder => $q->where('orcamento_prestador.custo_fornecedor', '>=', $min)
+                            )
+                            ->when(
+                                $data['max'] ?? null,
+                                fn (Builder $q, $max): Builder => $q->where('orcamento_prestador.custo_fornecedor', '<=', $max)
+                            )
+                            ->select('obms.*');
+                    }),
             ])
             ->defaultSort('created_at', 'desc')
             ->recordActions([
                 EditAction::make(),
+            ])
+            ->headerActions([
+                ExportAction::make()
+                    ->label('Exportar Excel')
+                    ->exports([
+                        ExcelExport::make()
+                            ->fromTable()
+                            ->withFilename(fn () => 'obms_' . now()->format('Ymd_His')),
+                    ]),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
