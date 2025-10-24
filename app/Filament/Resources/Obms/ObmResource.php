@@ -54,6 +54,13 @@ class ObmResource extends Resource
 
         $user = auth()->user();
         if ($user) {
+            // Ocultar OBMs de prestador e aumento_km para RH e Frotas
+            if ($user->hasAnyRole(['Recursos Humanos', 'RH', 'Frotas'])) {
+                $query->whereHas('orcamento', function (Builder $subQuery) {
+                    $subQuery->whereNotIn('tipo_orcamento', ['prestador', 'aumento_km']);
+                });
+            }
+
             if ($user->hasAnyRole(['Frotas'])) {
                 // Ver OBMs pendentes de definição de veículo (frota_id nulo), independentemente do colaborador
                 $query->whereNull('frota_id');

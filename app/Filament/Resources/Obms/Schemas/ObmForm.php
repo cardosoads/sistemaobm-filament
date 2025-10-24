@@ -102,8 +102,8 @@ class ObmForm
                                 return !in_array($orcamento->tipo_orcamento, ['prestador', 'aumento_km']);
                             })
                             ->reactive()
-                            ->disabled(fn () => auth()->user()?->hasAnyRole(['Recursos Humanos', 'Frotas']))
-                            ->dehydrated(fn () => !auth()->user()?->hasAnyRole(['Recursos Humanos', 'Frotas']))
+                            ->disabled(fn () => auth()->user()?->hasRole('Frotas'))
+                            ->dehydrated(fn () => !auth()->user()?->hasRole('Frotas'))
                             ->helperText('O colaborador não pode ter sobreposição de datas com outras OBMs'),
 
                         Components\Select::make('veiculo_busca')

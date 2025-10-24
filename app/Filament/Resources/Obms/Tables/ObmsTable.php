@@ -95,7 +95,7 @@ class ObmsTable
                     ->label('Colaborador')
                     ->sortable()
                     ->searchable()
-                    ->description(fn ($record) => $record?->colaborador?->cargo ?? '')
+                    ->description(fn ($record) => $record?->colaborador?->cargo?->cargo ?? '')
                     ->placeholder('N/A')
                     ->visible(fn ($record) => 
                         !$record || !$record->orcamento || 
