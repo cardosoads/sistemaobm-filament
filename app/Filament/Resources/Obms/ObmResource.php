@@ -58,17 +58,11 @@ class ObmResource extends Resource
                 // RH vê OBMs que deveriam ter funcionário MAS ainda não têm colaborador_id preenchido
                 $query->whereNull('colaborador_id')
                       ->whereHas('orcamento', function (Builder $subQuery) {
-                    $subQuery->where(function (Builder $innerQuery) {
-                        // Tipos que não são prestador nem aumento_km sempre deveriam ter funcionário
-                        $innerQuery->whereNotIn('tipo_orcamento', ['prestador', 'aumento_km'])
-                                  // OU tipo proprio_nova_rota com incluir_funcionario = true na tabela orcamento_proprio_nova_rota
-                                  ->orWhere(function (Builder $novaRotaQuery) {
-                                      $novaRotaQuery->where('tipo_orcamento', 'proprio_nova_rota')
-                                                   ->whereHas('propriosNovaRota', function (Builder $proprioQuery) {
-                                                       $proprioQuery->where('incluir_funcionario', true);
-                                                   });
-                                  });
-                    });
+                    // Apenas orçamentos do tipo proprio_nova_rota com incluir_funcionario = true precisam de colaborador
+                    $subQuery->where('tipo_orcamento', 'proprio_nova_rota')
+                             ->whereHas('propriosNovaRota', function (Builder $proprioQuery) {
+                                 $proprioQuery->where('incluir_funcionario', true);
+                             });
                 });
             } elseif ($user->hasAnyRole(['Frotas'])) {
                  // Frotas vê OBMs que deveriam ter frota MAS ainda não têm frota_id preenchido

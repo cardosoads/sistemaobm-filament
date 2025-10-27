@@ -61,6 +61,6 @@ class UserResource extends Resource
             return false;
         }
 
-        return $user->hasAnyRole(['Administrador', 'Recursos Humanos']);
+        return $user->hasRole('Administrador');
     }
 }
