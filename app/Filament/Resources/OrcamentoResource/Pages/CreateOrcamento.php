@@ -156,6 +156,33 @@ class CreateOrcamento extends CreateRecord
             $this->proprioNovaRotaData = $proprioNovaRotaData;
         }
 
+        // Garantir valores padrão para campos obrigatórios
+        $data['valor_funcionario'] = $data['valor_funcionario'] ?? 0;
+        $data['valor_aluguel_frota'] = $data['valor_aluguel_frota'] ?? 0;
+        $data['fornecedor_referencia'] = $data['fornecedor_referencia'] ?? 0;
+        $data['fornecedor_dias'] = $data['fornecedor_dias'] ?? 1;
+        $data['lucro_percentual_rota'] = $data['lucro_percentual_rota'] ?? 0;
+        $data['impostos_percentual_rota'] = $data['impostos_percentual_rota'] ?? 0;
+
+        // Remover campos específicos baseado no tipo de orçamento
+        if ($data['tipo_orcamento'] === 'prestador') {
+            $data['valor_funcionario'] = 0;
+            $data['valor_aluguel_frota'] = 0;
+            $data['fornecedor_omie_id_rota'] = null;
+            $data['fornecedor_referencia'] = 0;
+            $data['fornecedor_dias'] = 1;
+            $data['lucro_percentual_rota'] = 0;
+            $data['impostos_percentual_rota'] = 0;
+        } elseif ($data['tipo_orcamento'] === 'aumento_km') {
+            $data['valor_funcionario'] = 0;
+            $data['valor_aluguel_frota'] = 0;
+            $data['fornecedor_omie_id_rota'] = null;
+            $data['fornecedor_referencia'] = 0;
+            $data['fornecedor_dias'] = 1;
+            $data['lucro_percentual_rota'] = 0;
+            $data['impostos_percentual_rota'] = 0;
+        }
+
         return $data;
     }
 

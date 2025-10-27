@@ -54,19 +54,46 @@ class ObmResource extends Resource
 
         $user = auth()->user();
         if ($user) {
-            // Ocultar OBMs de prestador e aumento_km para RH e Frotas
-            if ($user->hasAnyRole(['Recursos Humanos', 'RH', 'Frotas'])) {
-                $query->whereHas('orcamento', function (Builder $subQuery) {
-                    $subQuery->whereNotIn('tipo_orcamento', ['prestador', 'aumento_km']);
+            if ($user->hasAnyRole(['Recursos Humanos', 'RH'])) {
+                // RH vê OBMs que deveriam ter funcionário MAS ainda não têm colaborador_id preenchido
+                $query->whereNull('colaborador_id')
+                      ->whereHas('orcamento', function (Builder $subQuery) {
+                    $subQuery->where(function (Builder $innerQuery) {
+                        // Tipos que não são prestador nem aumento_km sempre deveriam ter funcionário
+                        $innerQuery->whereNotIn('tipo_orcamento', ['prestador', 'aumento_km'])
+                                  // OU tipo proprio_nova_rota com incluir_funcionario = true na tabela orcamento_proprio_nova_rota
+                                  ->orWhere(function (Builder $novaRotaQuery) {
+                                      $novaRotaQuery->where('tipo_orcamento', 'proprio_nova_rota')
+                                                   ->whereHas('propriosNovaRota', function (Builder $proprioQuery) {
+                                                       $proprioQuery->where('incluir_funcionario', true);
+                                                   });
+                                  });
+                    });
                 });
-            }
-
-            if ($user->hasAnyRole(['Frotas'])) {
-                // Ver OBMs pendentes de definição de veículo (frota_id nulo), independentemente do colaborador
-                $query->whereNull('frota_id');
-            } elseif ($user->hasAnyRole(['Recursos Humanos', 'RH'])) {
-                // Ver OBMs pendentes de definição de colaborador (colaborador_id nulo), independentemente do veículo
-                $query->whereNull('colaborador_id');
+            } elseif ($user->hasAnyRole(['Frotas'])) {
+                 // Frotas vê OBMs que deveriam ter frota MAS ainda não têm frota_id preenchido
+                 $query->whereNull('frota_id')
+                       ->whereHas('orcamento', function (Builder $subQuery) {
+                     // Apenas orçamentos do tipo proprio_nova_rota com incluir_frota = true precisam de frota
+                     $subQuery->where('tipo_orcamento', 'proprio_nova_rota')
+                              ->whereHas('propriosNovaRota', function (Builder $proprioQuery) {
+                                  $proprioQuery->where('incluir_frota', true);
+                              });
+                 });
+            } else {
+                // Para outros usuários, aplicar filtro para não mostrar OBMs que só têm prestador
+                $query->where(function (Builder $subQuery) {
+                    $subQuery
+                        // Mostrar se tem funcionário OU frota
+                        ->where(function (Builder $innerQuery) {
+                            $innerQuery->whereNotNull('colaborador_id')
+                                      ->orWhereNotNull('frota_id');
+                        })
+                        // OU se não é do tipo prestador
+                        ->orWhereHas('orcamento', function (Builder $orcQuery) {
+                            $orcQuery->where('tipo_orcamento', '!=', 'prestador');
+                        });
+                });
             }
         }
 

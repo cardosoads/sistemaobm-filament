@@ -79,13 +79,23 @@ class ObmsTable
                     ->searchable()
                     ->getStateUsing(function ($record) {
                         $orcamento = $record?->orcamento;
-                        if (!$orcamento || $orcamento->tipo_orcamento !== 'prestador') {
+                        if (!$orcamento) {
                             return null;
                         }
-                        $prestador = $orcamento->prestadores()->with('fornecedor')->first();
-                        if ($prestador && $prestador->fornecedor) {
-                            return $prestador->fornecedor->razao_social;
+                        
+                        // Para nova rota, verificar se incluir_prestador está marcado
+                        if ($orcamento->tipo_orcamento === 'proprio_nova_rota' && !$orcamento->incluir_prestador) {
+                            return null;
                         }
+                        
+                        // Para prestador, sempre exibir
+                        if ($orcamento->tipo_orcamento === 'prestador') {
+                            $prestador = $orcamento->prestadores()->with('fornecedor')->first();
+                            if ($prestador && $prestador->fornecedor) {
+                                return $prestador->fornecedor->razao_social;
+                            }
+                        }
+                        
                         return null;
                     })
                     ->placeholder('N/A')
@@ -97,10 +107,22 @@ class ObmsTable
                     ->searchable()
                     ->description(fn ($record) => $record?->colaborador?->cargo?->cargo ?? '')
                     ->placeholder('N/A')
-                    ->visible(fn ($record) => 
-                        !$record || !$record->orcamento || 
-                        !in_array($record->orcamento->tipo_orcamento, ['prestador', 'aumento_km'])
-                    ),
+                    ->visible(function ($record) {
+                        if (!$record || !$record->orcamento) {
+                            return true;
+                        }
+                        
+                        $orcamento = $record->orcamento;
+                        
+                        // Para nova rota, verificar se incluir_funcionario está marcado na tabela orcamento_proprio_nova_rota
+                        if ($orcamento->tipo_orcamento === 'proprio_nova_rota') {
+                            $proprioNovaRota = \App\Models\OrcamentoProprioNovaRota::where('orcamento_id', $orcamento->id)->first();
+                            return $proprioNovaRota ? $proprioNovaRota->incluir_funcionario : false;
+                        }
+                        
+                        // Para outros tipos, manter lógica original
+                        return !in_array($orcamento->tipo_orcamento, ['prestador', 'aumento_km']);
+                    }),
 
                 Columns\TextColumn::make('frota.tipoVeiculo.nome')
                     ->label('Veículo')
@@ -108,10 +130,22 @@ class ObmsTable
                     ->searchable()
                     ->description(fn ($record) => $record?->frota?->fipe ?? '')
                     ->placeholder('N/A')
-                    ->visible(fn ($record) => 
-                        !$record || !$record->orcamento || 
-                        !in_array($record->orcamento->tipo_orcamento, ['prestador', 'aumento_km'])
-                    ),
+                    ->visible(function ($record) {
+                        if (!$record || !$record->orcamento) {
+                            return true;
+                        }
+                        
+                        $orcamento = $record->orcamento;
+                        
+                        // Para nova rota, verificar se incluir_frota está marcado na tabela orcamento_proprio_nova_rota
+                        if ($orcamento->tipo_orcamento === 'proprio_nova_rota') {
+                            $proprioNovaRota = \App\Models\OrcamentoProprioNovaRota::where('orcamento_id', $orcamento->id)->first();
+                            return $proprioNovaRota ? $proprioNovaRota->incluir_frota : false;
+                        }
+                        
+                        // Para outros tipos, manter lógica original
+                        return !in_array($orcamento->tipo_orcamento, ['prestador', 'aumento_km']);
+                    }),
 
                 Columns\TextColumn::make('data_inicio')
                     ->label('Início')
@@ -166,6 +200,10 @@ class ObmsTable
                                 return $prestador?->custo_fornecedor;
                                 
                             case 'proprio_nova_rota':
+                                // Para nova rota, verificar se incluir_prestador está marcado
+                                if (!$orcamento->incluir_prestador) {
+                                    return null;
+                                }
                                 $proprioNovaRota = $orcamento->propriosNovaRota()->select('fornecedor_custo')->first();
                                 return $proprioNovaRota?->fornecedor_custo;
                                 

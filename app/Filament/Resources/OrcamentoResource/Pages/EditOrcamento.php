@@ -155,6 +155,10 @@ class EditOrcamento extends EditRecord
         
         // Se for orçamento do tipo proprio_nova_rota, extrair dados específicos do próprios nova rota
         if (($data['tipo_orcamento'] ?? null) === 'proprio_nova_rota') {
+            // Garantir que fornecedor_referencia não seja null quando incluir_prestador estiver marcado
+            if (($data['incluir_prestador'] ?? false) && ($data['fornecedor_referencia'] ?? null) === null) {
+                $data['fornecedor_referencia'] = 0;
+            }
             // Campos que pertencem à tabela orcamento_proprio_nova_rota
             $proprioNovaRotaFields = [
                 'incluir_funcionario',
@@ -191,7 +195,24 @@ class EditOrcamento extends EditRecord
             foreach ($proprioNovaRotaFields as $field) {
                 if (isset($data[$field])) {
                     $proprioNovaRotaData[$field] = $data[$field];
-                    unset($data[$field]); // Remover do array principal
+                    
+                    // Não remover campos que também pertencem à tabela orcamentos
+                    $camposCompartilhados = [
+                        'incluir_funcionario',
+                        'incluir_frota', 
+                        'incluir_prestador',
+                        'valor_funcionario',
+                        'frota_id',
+                        'fornecedor_omie_id',
+                        'fornecedor_referencia',
+                        'fornecedor_dias',
+                        'lucro_percentual_rota',
+                        'impostos_percentual_rota'
+                    ];
+                    
+                    if (!in_array($field, $camposCompartilhados)) {
+                        unset($data[$field]); // Remover do array principal apenas se não for compartilhado
+                    }
                 }
             }
             

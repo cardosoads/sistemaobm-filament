@@ -52,7 +52,12 @@ class ObmForm
                             ->nullable()
                             ->native(false)
                             ->closeOnDateSelection()
-                            ->minDate(fn () => auth()->user()?->hasAnyRole(['Recursos Humanos', 'Frotas']) ? null : now())
+                            ->minDate(function () {
+                                if (auth()->user()?->hasAnyRole(['Recursos Humanos', 'Frotas'])) {
+                                    return null;
+                                }
+                                return now()->format('Y-m-d');
+                            })
                             ->reactive()
                             ->disabled(fn () => auth()->user()?->hasAnyRole(['Recursos Humanos', 'Frotas']))
                             ->dehydrated(fn () => !auth()->user()?->hasAnyRole(['Recursos Humanos', 'Frotas'])),
@@ -62,7 +67,18 @@ class ObmForm
                             ->nullable()
                             ->native(false)
                             ->closeOnDateSelection()
-                            ->minDate(fn (Get $get) => auth()->user()?->hasAnyRole(['Recursos Humanos', 'Frotas']) ? null : ($get('data_inicio') ?: now()))
+                            ->minDate(function (Get $get) {
+                                if (auth()->user()?->hasAnyRole(['Recursos Humanos', 'Frotas'])) {
+                                    return null;
+                                }
+                                
+                                $dataInicio = $get('data_inicio');
+                                if ($dataInicio) {
+                                    return $dataInicio;
+                                }
+                                
+                                return now()->format('Y-m-d');
+                            })
                             ->reactive()
                             ->disabled(fn () => auth()->user()?->hasAnyRole(['Recursos Humanos', 'Frotas']))
                             ->dehydrated(fn () => !auth()->user()?->hasAnyRole(['Recursos Humanos', 'Frotas'])),
@@ -99,6 +115,12 @@ class ObmForm
                                 $orcamento = Orcamento::find($orcamentoId);
                                 if (!$orcamento) return true;
                                 
+                                // Para nova rota, verificar se incluir_funcionario está marcado na tabela orcamento_proprio_nova_rota
+                                if ($orcamento->tipo_orcamento === 'proprio_nova_rota') {
+                                    $proprioNovaRota = \App\Models\OrcamentoProprioNovaRota::where('orcamento_id', $orcamento->id)->first();
+                                    return $proprioNovaRota ? $proprioNovaRota->incluir_funcionario : false;
+                                }
+                                
                                 return !in_array($orcamento->tipo_orcamento, ['prestador', 'aumento_km']);
                             })
                             ->reactive()
@@ -132,6 +154,12 @@ class ObmForm
                                 
                                 $orcamento = Orcamento::find($orcamentoId);
                                 if (!$orcamento) return true;
+                                
+                                // Para nova rota, verificar se incluir_frota está marcado na tabela orcamento_proprio_nova_rota
+                                if ($orcamento->tipo_orcamento === 'proprio_nova_rota') {
+                                    $proprioNovaRota = \App\Models\OrcamentoProprioNovaRota::where('orcamento_id', $orcamento->id)->first();
+                                    return $proprioNovaRota ? $proprioNovaRota->incluir_frota : false;
+                                }
                                 
                                 return !in_array($orcamento->tipo_orcamento, ['prestador', 'aumento_km']);
                             })
