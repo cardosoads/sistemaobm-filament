@@ -12,6 +12,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->alias([
+            'auth' => \App\Http\Middleware\Authenticate::class,
+        ]);
+
         // Rate limiting temporariamente removido para debug
         // $middleware->throttleApi('omie', 60, 1); // 60 requests por minuto
         // $middleware->throttleApi('omie-test', 10, 1); // 10 requests por minuto para teste de conexão
