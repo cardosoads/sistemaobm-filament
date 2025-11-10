@@ -36,9 +36,9 @@ return [
     ],
 
     'omie' => [
-        'app_key' => env('OMIE_APP_KEY'),
-        'app_secret' => env('OMIE_APP_SECRET'),
-        'api_url' => env('OMIE_API_URL', 'https://app.omie.com.br/api/v1/'),
+        'app_key' => env('OMIE_APP_KEY', ''),
+        'app_secret' => env('OMIE_APP_SECRET', ''),
+        'api_url' => env('OMIE_API_URL', 'https://app.omie.com.br/api/v1'),
     ],
 
 ];
