@@ -7,6 +7,7 @@ use App\Models\Orcamento;
 use App\Observers\OrcamentoObserver;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -26,8 +27,10 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Bootstrap any application services.
      */
-    public function boot(): void
+    public function boot(Router $router): void
     {
+        $router->aliasMiddleware('auth', \App\Http\Middleware\Authenticate::class);
+
         // Registrar observer de Orçamentos
         Orcamento::observe(OrcamentoObserver::class);
 
