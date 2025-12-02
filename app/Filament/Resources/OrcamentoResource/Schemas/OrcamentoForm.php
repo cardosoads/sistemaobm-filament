@@ -71,7 +71,7 @@ class OrcamentoForm
                             
                         Components\TextInput::make('id_logcare')
                             ->label('ID LogCare')
-                            ->numeric()
+                            ->maxLength(50)
                             ->nullable(),
                             
                         Components\Select::make('cliente_omie_id')

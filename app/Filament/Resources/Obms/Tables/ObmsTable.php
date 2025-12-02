@@ -83,16 +83,32 @@ class ObmsTable
                             return null;
                         }
                         
-                        // Para nova rota, verificar se incluir_prestador está marcado
-                        if ($orcamento->tipo_orcamento === 'proprio_nova_rota' && !$orcamento->incluir_prestador) {
-                            return null;
-                        }
-                        
-                        // Para prestador, sempre exibir
+                        // Para tipo prestador, buscar na tabela orcamento_prestador
                         if ($orcamento->tipo_orcamento === 'prestador') {
                             $prestador = $orcamento->prestadores()->with('fornecedor')->first();
-                            if ($prestador && $prestador->fornecedor) {
-                                return $prestador->fornecedor->razao_social;
+                            if ($prestador) {
+                                // Tentar nome do fornecedor salvo diretamente primeiro
+                                if ($prestador->fornecedor_nome) {
+                                    return $prestador->fornecedor_nome;
+                                }
+                                // Depois tentar pelo relacionamento
+                                if ($prestador->fornecedor) {
+                                    return $prestador->fornecedor->razao_social ?? $prestador->fornecedor->nome;
+                                }
+                            }
+                        }
+                        
+                        // Para nova rota, verificar se incluir_fornecedor está marcado
+                        if ($orcamento->tipo_orcamento === 'proprio_nova_rota') {
+                            $proprioNovaRota = $orcamento->propriosNovaRota()->first();
+                            if ($proprioNovaRota && $proprioNovaRota->incluir_fornecedor) {
+                                // Tentar buscar pelo nome salvo diretamente ou pelo relacionamento
+                                if ($proprioNovaRota->fornecedor_nome) {
+                                    return $proprioNovaRota->fornecedor_nome;
+                                }
+                                if ($proprioNovaRota->fornecedor) {
+                                    return $proprioNovaRota->fornecedor->razao_social ?? $proprioNovaRota->fornecedor->nome;
+                                }
                             }
                         }
                         

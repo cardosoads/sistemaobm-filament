@@ -16,6 +16,7 @@ class Obm extends Model
         'orcamento_id',
         'colaborador_id',
         'frota_id',
+        'veiculo_id',
         'user_id',
         'data_inicio',
         'data_fim',
@@ -55,6 +56,11 @@ class Obm extends Model
     public function frota(): BelongsTo
     {
         return $this->belongsTo(Frota::class);
+    }
+
+    public function veiculo(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Veiculo::class);
     }
 
     public function user(): BelongsTo

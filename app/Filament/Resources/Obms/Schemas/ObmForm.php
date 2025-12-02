@@ -128,8 +128,8 @@ class ObmForm
                             ->dehydrated(fn () => !auth()->user()?->hasRole('Frotas'))
                             ->helperText('O colaborador não pode ter sobreposição de datas com outras OBMs'),
 
-                        Components\Select::make('veiculo_busca')
-                            ->label('Buscar Veículo por Placa/RENAVAM')
+                        Components\Select::make('veiculo_id')
+                            ->label('Veículo')
                             ->placeholder('Digite placa ou RENAVAM para buscar')
                             ->searchable()
                             ->getSearchResultsUsing(function (string $search) {
@@ -144,9 +144,13 @@ class ObmForm
                                                        ($veiculo->tipoVeiculo->nome ?? 'N/A')
                                     ]);
                             })
-                            ->getOptionLabelUsing(fn ($value) => 
-                                \App\Models\Veiculo::find($value)?->placa ?? $value
-                            )
+                            ->getOptionLabelUsing(function ($value) {
+                                $veiculo = \App\Models\Veiculo::find($value);
+                                if (!$veiculo) return $value;
+                                return "Placa: {$veiculo->placa} - RENAVAM: {$veiculo->renavam} - " . 
+                                       "Modelo: {$veiculo->marca_modelo} - Tipo: " . 
+                                       ($veiculo->tipoVeiculo->nome ?? 'N/A');
+                            })
                             ->reactive()
                             ->visible(function (Get $get) {
                                 $orcamentoId = $get('orcamento_id');
