@@ -50,7 +50,7 @@ class ObmResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery()
-            ->with(['orcamento', 'colaborador', 'frota', 'user']);
+            ->with(['orcamento', 'colaborador', 'frota', 'veiculo', 'user']);
 
         $user = auth()->user();
         if ($user) {

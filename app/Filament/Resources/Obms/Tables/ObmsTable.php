@@ -140,11 +140,26 @@ class ObmsTable
                         return !in_array($orcamento->tipo_orcamento, ['prestador', 'aumento_km']);
                     }),
 
-                Columns\TextColumn::make('frota.tipoVeiculo.nome')
+                Columns\TextColumn::make('veiculo.placa')
                     ->label('Veículo')
                     ->sortable()
                     ->searchable()
-                    ->description(fn ($record) => $record?->frota?->fipe ?? '')
+                    ->getStateUsing(function ($record) {
+                        // Primeiro tenta o veículo direto (novo campo)
+                        if ($record?->veiculo) {
+                            return $record->veiculo->placa;
+                        }
+                        // Fallback para frota (campo antigo)
+                        if ($record?->frota?->tipoVeiculo) {
+                            return $record->frota->tipoVeiculo->nome;
+                        }
+                        return null;
+                    })
+                    ->description(fn ($record) => 
+                        $record?->veiculo 
+                            ? $record->veiculo->marca_modelo 
+                            : ($record?->frota?->fipe ?? '')
+                    )
                     ->placeholder('N/A')
                     ->visible(function ($record) {
                         if (!$record || !$record->orcamento) {
