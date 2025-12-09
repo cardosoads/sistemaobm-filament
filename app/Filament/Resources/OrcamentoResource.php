@@ -56,6 +56,16 @@ class OrcamentoResource extends Resource
         ];
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with([
+                'prestadores.fornecedor',
+                'propriosNovaRota.fornecedor',
+                'clienteFornecedor',
+            ]);
+    }
+
     public static function shouldRegisterNavigation(): bool
     {
         $user = auth()->user();

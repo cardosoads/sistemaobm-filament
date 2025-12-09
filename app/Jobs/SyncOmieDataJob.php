@@ -16,7 +16,7 @@ class SyncOmieDataJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $timeout = 300; // 5 minutos
+    public $timeout = 1800; // 30 minutos
     public $tries = 1;
 
     private string $jobId;

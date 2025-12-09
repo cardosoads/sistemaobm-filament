@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\CentroCustos\Pages;
 
 use App\Filament\Resources\CentroCustos\CentroCustoResource;
+use App\Jobs\SyncCentrosCustoJob;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
@@ -23,30 +24,26 @@ class ListCentroCustos extends ListRecords
                 ->color('info')
                 ->requiresConfirmation()
                 ->modalHeading('Sincronizar Centros de Custo')
-                ->modalDescription('Esta ação irá sincronizar todos os centros de custo com a API Omie. O processo pode levar alguns minutos.')
+                ->modalDescription('Esta ação irá sincronizar todos os centros de custo com a API Omie. O processo será executado em background e pode levar alguns minutos.')
                 ->modalSubmitActionLabel('Sincronizar')
                 ->action(function () {
                     try {
-                        // Executa o comando de sincronização específico para centros de custo
-                        Artisan::call('sync:centros-custo');
+                        // Gerar ID único para o job
+                        $jobId = uniqid('sync_centros_custo_', true);
                         
-                        $output = Artisan::output();
-                        $stats = $this->extractSyncStats($output);
-                        $message = $this->formatSyncMessage($stats);
+                        // Disparar job em background
+                        SyncCentrosCustoJob::dispatch($jobId);
                         
                         Notification::make()
-                            ->title('Sincronização concluída!')
-                            ->body($message)
+                            ->title('Sincronização iniciada!')
+                            ->body('A sincronização de centros de custo foi iniciada em background. Você será notificado quando concluir.')
                             ->success()
                             ->send();
                             
-                        // Recarrega a página para mostrar os dados atualizados
-                        $this->redirect(request()->header('Referer'));
-                        
                     } catch (\Exception $e) {
                         Notification::make()
-                            ->title('Erro na sincronização')
-                            ->body('Ocorreu um erro durante a sincronização: ' . $e->getMessage())
+                            ->title('Erro ao iniciar sincronização')
+                            ->body('Ocorreu um erro ao iniciar a sincronização: ' . $e->getMessage())
                             ->danger()
                             ->send();
                     }

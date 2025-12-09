@@ -50,6 +50,53 @@ class OrcamentoTable
                     })
                     ->sortable(),
                     
+                Tables\Columns\TextColumn::make('prestador_nome')
+                    ->label('Prestador')
+                    ->searchable()
+                    ->sortable()
+                    ->getStateUsing(function ($record) {
+                        // Para tipo prestador, buscar na tabela orcamento_prestador
+                        if ($record->tipo_orcamento === 'prestador') {
+                            // Usar o relacionamento já carregado via eager loading
+                            $prestador = $record->prestadores->first();
+                            if ($prestador) {
+                                // Priorizar o nome salvo diretamente no campo fornecedor_nome
+                                if (!empty($prestador->fornecedor_nome)) {
+                                    return $prestador->fornecedor_nome;
+                                }
+                                // Fallback: buscar pelo relacionamento fornecedor (já carregado)
+                                if ($prestador->fornecedor) {
+                                    return $prestador->fornecedor->nome_fantasia 
+                                        ?? $prestador->fornecedor->razao_social 
+                                        ?? null;
+                                }
+                            }
+                        }
+                        
+                        // Para nova rota, verificar se incluir_fornecedor está marcado
+                        if ($record->tipo_orcamento === 'proprio_nova_rota') {
+                            // Usar o relacionamento já carregado via eager loading
+                            $proprioNovaRota = $record->propriosNovaRota->first();
+                            if ($proprioNovaRota && $proprioNovaRota->incluir_fornecedor) {
+                                // Priorizar o nome salvo diretamente no campo fornecedor_nome
+                                if (!empty($proprioNovaRota->fornecedor_nome)) {
+                                    return $proprioNovaRota->fornecedor_nome;
+                                }
+                                // Fallback: buscar pelo relacionamento fornecedor (já carregado)
+                                if ($proprioNovaRota->fornecedor) {
+                                    return $proprioNovaRota->fornecedor->nome_fantasia 
+                                        ?? $proprioNovaRota->fornecedor->razao_social 
+                                        ?? null;
+                                }
+                            }
+                        }
+                        
+                        return null;
+                    })
+                    ->placeholder('N/A')
+                    ->toggleable()
+                    ->visible(fn ($record) => in_array($record->tipo_orcamento ?? '', ['prestador', 'proprio_nova_rota'])),
+                    
                 Tables\Columns\BadgeColumn::make('status')
                     ->label('Status')
                     ->colors([

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\ClienteFornecedors\Pages;
 
 use App\Filament\Resources\ClienteFornecedors\ClienteFornecedorResource;
+use App\Jobs\SyncOmieDataJob;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
@@ -25,33 +26,26 @@ class ListClienteFornecedors extends ListRecords
                 ->color('info')
                 ->requiresConfirmation()
                 ->modalHeading('Sincronizar Clientes e Fornecedores')
-                ->modalDescription('Esta ação irá sincronizar todos os clientes e fornecedores com a API Omie. O processo pode levar alguns minutos.')
+                ->modalDescription('Esta ação irá sincronizar todos os clientes e fornecedores com a API Omie. O processo será executado em background e pode levar alguns minutos.')
                 ->modalSubmitActionLabel('Sincronizar')
                 ->action(function () {
                     try {
-                        // Executa o comando de sincronização
-                        Artisan::call('omie:sync', [
-                            '--type' => 'all',
-                            '--force' => true
-                        ]);
+                        // Gerar ID único para o job
+                        $jobId = uniqid('sync_', true);
                         
-                        $output = Artisan::output();
-                        $stats = $this->extractSyncStats($output);
-                        $message = $this->formatSyncMessage($stats);
+                        // Disparar job em background
+                        SyncOmieDataJob::dispatch($jobId);
                         
                         Notification::make()
-                            ->title('Sincronização concluída!')
-                            ->body($message)
+                            ->title('Sincronização iniciada!')
+                            ->body('A sincronização foi iniciada em background. Você será notificado quando concluir.')
                             ->success()
                             ->send();
                             
-                        // Recarrega a página para mostrar os dados atualizados
-                        $this->redirect(request()->header('Referer'));
-                        
                     } catch (\Exception $e) {
                         Notification::make()
-                            ->title('Erro na sincronização')
-                            ->body('Ocorreu um erro durante a sincronização: ' . $e->getMessage())
+                            ->title('Erro ao iniciar sincronização')
+                            ->body('Ocorreu um erro ao iniciar a sincronização: ' . $e->getMessage())
                             ->danger()
                             ->send();
                     }

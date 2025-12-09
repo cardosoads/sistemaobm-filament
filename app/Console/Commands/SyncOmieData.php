@@ -197,22 +197,23 @@ class SyncOmieData extends Command
     {
         $omieId = $clienteData['codigo_cliente_omie'];
         
-        $existing = ClienteFornecedor::where('codigo_cliente_omie', $omieId)
-            ->where('is_cliente', true)
-            ->first();
+        // Buscar registro existente (independente de ser cliente ou fornecedor)
+        // Todos os registros sincronizados vêm como fornecedor
+        $existing = ClienteFornecedor::where('codigo_cliente_omie', $omieId)->first();
         
-        $data = $this->mapClienteData($clienteData, true);
+        // Todos os registros sincronizados vêm como fornecedor (is_cliente = false)
+        $data = $this->mapClienteData($clienteData, false);
         
         if ($existing) {
             if ($force || $this->shouldUpdate($existing, $clienteData)) {
                 $existing->update($data);
                 $this->stats['clientes_atualizados']++;
-                $this->line("   ↻ Cliente atualizado: {$data['razao_social']}");
+                $this->line("   ↻ Fornecedor atualizado: {$data['razao_social']}");
             }
         } else {
             ClienteFornecedor::create($data);
             $this->stats['clientes_novos']++;
-            $this->line("   + Cliente criado: {$data['razao_social']}");
+            $this->line("   + Fornecedor criado: {$data['razao_social']}");
         }
     }
 

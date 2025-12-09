@@ -294,9 +294,9 @@ class SyncProgress extends Component
 
     private function processClient($clientData)
     {
-        $existing = ClienteFornecedor::where('codigo_cliente_omie', $clientData['codigo'])
-            ->where('is_cliente', true)
-            ->first();
+        // Buscar registro existente (independente de ser cliente ou fornecedor)
+        // Todos os registros sincronizados vêm como fornecedor
+        $existing = ClienteFornecedor::where('codigo_cliente_omie', $clientData['codigo'])->first();
 
         if ($existing) {
             $existing->update([
@@ -312,6 +312,7 @@ class SyncProgress extends Component
                 'cidade' => $clientData['cidade'],
                 'estado' => $clientData['estado'],
                 'cep' => $clientData['cep'],
+                'is_cliente' => false, // Todos vêm como fornecedor
                 'status_sincronizacao' => 'sincronizado',
                 'ultima_sincronizacao' => now(),
                 'dados_originais_api' => $clientData['dados_originais'] ?? null,
@@ -333,7 +334,7 @@ class SyncProgress extends Component
                 'cidade' => $clientData['cidade'],
                 'estado' => $clientData['estado'],
                 'cep' => $clientData['cep'],
-                'is_cliente' => true,
+                'is_cliente' => false, // Todos vêm como fornecedor
                 'importado_api' => 'S',
                 'status_sincronizacao' => 'sincronizado',
                 'ultima_sincronizacao' => now(),

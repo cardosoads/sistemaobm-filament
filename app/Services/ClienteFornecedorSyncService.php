@@ -46,7 +46,7 @@ class ClienteFornecedorSyncService
 
             foreach ($clientesData as $clienteData) {
                 try {
-                    $resultado = $this->processarCliente($clienteData, true); // true = é cliente
+                    $resultado = $this->processarCliente($clienteData, false); // false = é fornecedor
                     
                     if ($resultado['criado']) {
                         $clientesCriados++;
@@ -257,15 +257,14 @@ class ClienteFornecedorSyncService
             throw new \Exception('Código Omie não encontrado nos dados');
         }
 
-        // Buscar registro existente
-        $clienteFornecedor = ClienteFornecedor::where('codigo_cliente_omie', $codigoOmie)
-            ->where('is_cliente', $isCliente)
-            ->first();
+        // Buscar registro existente (independente de ser cliente ou fornecedor)
+        // Se o usuário quer que todos venham como fornecedor, vamos buscar qualquer registro com o mesmo código
+        $clienteFornecedor = ClienteFornecedor::where('codigo_cliente_omie', $codigoOmie)->first();
 
         $dadosParaSalvar = $this->mapearDadosApi($data, $isCliente);
 
         if ($clienteFornecedor) {
-            // Atualizar registro existente
+            // Atualizar registro existente (mudando o tipo se necessário)
             $clienteFornecedor->update($dadosParaSalvar);
             $clienteFornecedor->marcarComoSincronizado();
             

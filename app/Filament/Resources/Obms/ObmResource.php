@@ -82,17 +82,25 @@ class ObmResource extends Resource
                               });
                  });
             } else {
-                // Para outros usuários, aplicar filtro para não mostrar OBMs que só têm prestador
+                // Para outros usuários:
+                // - Sempre mostrar OBMs do tipo prestador (eles não precisam de colaborador ou frota)
+                // - Para outros tipos, mostrar apenas se tiverem colaborador OU frota
                 $query->where(function (Builder $subQuery) {
                     $subQuery
-                        // Mostrar se tem funcionário OU frota
-                        ->where(function (Builder $innerQuery) {
-                            $innerQuery->whereNotNull('colaborador_id')
-                                      ->orWhereNotNull('frota_id');
+                        // Sempre mostrar OBMs do tipo prestador
+                        ->whereHas('orcamento', function (Builder $orcQuery) {
+                            $orcQuery->where('tipo_orcamento', 'prestador');
                         })
-                        // OU se não é do tipo prestador
-                        ->orWhereHas('orcamento', function (Builder $orcQuery) {
-                            $orcQuery->where('tipo_orcamento', '!=', 'prestador');
+                        // OU mostrar outros tipos que tenham colaborador OU frota
+                        ->orWhere(function (Builder $innerQuery) {
+                            $innerQuery
+                                ->whereHas('orcamento', function (Builder $orcQuery) {
+                                    $orcQuery->where('tipo_orcamento', '!=', 'prestador');
+                                })
+                                ->where(function (Builder $hasResourceQuery) {
+                                    $hasResourceQuery->whereNotNull('colaborador_id')
+                                                    ->orWhereNotNull('frota_id');
+                                });
                         });
                 });
             }

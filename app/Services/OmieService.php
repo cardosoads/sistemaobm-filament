@@ -138,30 +138,76 @@ class OmieService
             if ($response->successful()) {
                 $data = $response->json();
                 
-                // Se há dados de clientes ou se não há erro, considera sucesso
-                if (isset($data['clientes_cadastro']) || !isset($data['faultstring'])) {
+                // Verificar se há erro na resposta
+                if (isset($data['faultstring']) || isset($data['faultCode'])) {
+                    Log::error('Erro na resposta da API Omie para clientes', [
+                        'faultstring' => $data['faultstring'] ?? null,
+                        'faultCode' => $data['faultCode'] ?? null,
+                        'response' => $data
+                    ]);
+                    
+                    return [
+                        'success' => false,
+                        'message' => 'Erro da API: ' . ($data['faultstring'] ?? $data['faultCode'] ?? 'Erro desconhecido'),
+                        'data' => [],
+                        'pagination' => ['current_page' => 1, 'total_pages' => 1, 'total' => 0]
+                    ];
+                }
+                
+                // Verificar se há dados de clientes
+                if (isset($data['clientes_cadastro']) && is_array($data['clientes_cadastro'])) {
                     return [
                         'success' => true,
-                        'data' => $data['clientes_cadastro'] ?? [],
+                        'data' => $data['clientes_cadastro'],
                         'pagination' => [
                             'current_page' => $pagina,
                             'total_pages' => $data['total_de_paginas'] ?? 1,
-                            'total' => $data['total_de_registros'] ?? 0,
+                            'total' => $data['total_de_registros'] ?? count($data['clientes_cadastro']),
                         ]
                     ];
                 }
                 
+                // Se chegou aqui, a resposta não tem a estrutura esperada
+                Log::warning('Resposta da API Omie para clientes sem estrutura esperada', [
+                    'response_keys' => array_keys($data ?? []),
+                    'response' => $data
+                ]);
+                
                 return [
                     'success' => false,
-                    'message' => 'Erro da API: ' . ($data['faultstring'] ?? 'Erro desconhecido'),
+                    'message' => 'Resposta da API não contém dados de clientes. Estrutura: ' . json_encode(array_keys($data ?? [])),
                     'data' => [],
                     'pagination' => ['current_page' => 1, 'total_pages' => 1, 'total' => 0]
                 ];
             }
             
+            // Se a resposta HTTP não foi bem-sucedida, tentar extrair erro do body
+            $errorMessage = 'Resposta inválida da API Omie (HTTP ' . $response->status() . ')';
+            
+            try {
+                $errorData = $response->json();
+                if (isset($errorData['faultstring'])) {
+                    $errorMessage = $errorData['faultstring'];
+                } elseif (isset($errorData['faultCode'])) {
+                    $errorMessage = $errorData['faultCode'];
+                }
+            } catch (\Exception $e) {
+                // Se não conseguir parsear JSON, usar o body como está
+                $body = $response->body();
+                if (!empty($body)) {
+                    $errorMessage = 'Erro da API: ' . $body;
+                }
+            }
+            
+            Log::error('Resposta HTTP inválida da API Omie para clientes', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+                'error_message' => $errorMessage
+            ]);
+            
             return [
                 'success' => false,
-                'message' => 'Resposta inválida da API Omie',
+                'message' => $errorMessage,
                 'data' => [],
                 'pagination' => ['current_page' => 1, 'total_pages' => 1, 'total' => 0]
             ];
@@ -196,30 +242,76 @@ class OmieService
             if ($response->successful()) {
                 $data = $response->json();
                 
-                // Se há dados de fornecedores ou se não há erro, considera sucesso
-                if (isset($data['cadastros']) || !isset($data['faultstring'])) {
+                // Verificar se há erro na resposta
+                if (isset($data['faultstring']) || isset($data['faultCode'])) {
+                    Log::error('Erro na resposta da API Omie para fornecedores', [
+                        'faultstring' => $data['faultstring'] ?? null,
+                        'faultCode' => $data['faultCode'] ?? null,
+                        'response' => $data
+                    ]);
+                    
+                    return [
+                        'success' => false,
+                        'message' => 'Erro da API: ' . ($data['faultstring'] ?? $data['faultCode'] ?? 'Erro desconhecido'),
+                        'data' => [],
+                        'pagination' => ['current_page' => 1, 'total_pages' => 1, 'total' => 0]
+                    ];
+                }
+                
+                // Verificar se há dados de fornecedores
+                if (isset($data['cadastros']) && is_array($data['cadastros'])) {
                     return [
                         'success' => true,
-                        'data' => $data['cadastros'] ?? [],
+                        'data' => $data['cadastros'],
                         'pagination' => [
                             'current_page' => $pagina,
                             'total_pages' => $data['total_de_paginas'] ?? 1,
-                            'total' => $data['total_de_registros'] ?? 0,
+                            'total' => $data['total_de_registros'] ?? count($data['cadastros']),
                         ]
                     ];
                 }
                 
+                // Se chegou aqui, a resposta não tem a estrutura esperada
+                Log::warning('Resposta da API Omie para fornecedores sem estrutura esperada', [
+                    'response_keys' => array_keys($data ?? []),
+                    'response' => $data
+                ]);
+                
                 return [
                     'success' => false,
-                    'message' => 'Erro da API: ' . ($data['faultstring'] ?? 'Erro desconhecido'),
+                    'message' => 'Resposta da API não contém dados de fornecedores. Estrutura: ' . json_encode(array_keys($data ?? [])),
                     'data' => [],
                     'pagination' => ['current_page' => 1, 'total_pages' => 1, 'total' => 0]
                 ];
             }
             
+            // Se a resposta HTTP não foi bem-sucedida, tentar extrair erro do body
+            $errorMessage = 'Resposta inválida da API Omie (HTTP ' . $response->status() . ')';
+            
+            try {
+                $errorData = $response->json();
+                if (isset($errorData['faultstring'])) {
+                    $errorMessage = $errorData['faultstring'];
+                } elseif (isset($errorData['faultCode'])) {
+                    $errorMessage = $errorData['faultCode'];
+                }
+            } catch (\Exception $e) {
+                // Se não conseguir parsear JSON, usar o body como está
+                $body = $response->body();
+                if (!empty($body)) {
+                    $errorMessage = 'Erro da API: ' . $body;
+                }
+            }
+            
+            Log::error('Resposta HTTP inválida da API Omie para fornecedores', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+                'error_message' => $errorMessage
+            ]);
+            
             return [
                 'success' => false,
-                'message' => 'Resposta inválida da API Omie',
+                'message' => $errorMessage,
                 'data' => [],
                 'pagination' => ['current_page' => 1, 'total_pages' => 1, 'total' => 0]
             ];
@@ -334,45 +426,92 @@ class OmieService
             if ($response->successful()) {
                 $data = $response->json();
                 
-                // Se há dados de departamentos ou se não há erro, considera sucesso
-                if (isset($data['departamentos']) || !isset($data['faultstring'])) {
+                // Verificar se há erro na resposta
+                if (isset($data['faultstring']) || isset($data['faultCode'])) {
+                    Log::error('Erro na resposta da API Omie para departamentos', [
+                        'faultstring' => $data['faultstring'] ?? null,
+                        'faultCode' => $data['faultCode'] ?? null,
+                        'response' => $data
+                    ]);
+                    
+                    return [
+                        'success' => false,
+                        'message' => 'Erro da API: ' . ($data['faultstring'] ?? $data['faultCode'] ?? 'Erro desconhecido'),
+                        'data' => [],
+                        'pagination' => ['current_page' => 1, 'total_pages' => 1, 'total' => 0]
+                    ];
+                }
+                
+                // Verificar se há dados de departamentos
+                if (isset($data['departamentos']) && is_array($data['departamentos'])) {
                     return [
                         'success' => true,
                         'data' => array_map(function ($departamento) {
                             return [
-                                'codigo_departamento_omie' => $departamento['codigo'] ?? null,
+                                'codigo_departamento_omie' => $departamento['codigo'] ?? $departamento['codigo_departamento_omie'] ?? null,
                                 'codigo_departamento_integracao' => $departamento['codigo_departamento_integracao'] ?? null,
-                                'nome_departamento' => $departamento['descricao'] ?? null,
+                                'nome_departamento' => $departamento['descricao'] ?? $departamento['nome'] ?? $departamento['nome_departamento'] ?? null,
                                 'descricao_departamento' => $departamento['descricao'] ?? null,
                                 'estrutura' => $departamento['estrutura'] ?? null,
                                 'inativo' => $departamento['inativo'] ?? 'N',
                             ];
-                        }, $data['departamentos'] ?? []),
+                        }, $data['departamentos']),
                         'pagination' => [
                             'current_page' => $page,
                             'total_pages' => $data['total_de_paginas'] ?? 1,
-                            'total' => $data['total_de_registros'] ?? 0,
+                            'total' => $data['total_de_registros'] ?? count($data['departamentos'] ?? []),
                         ]
                     ];
                 }
                 
+                // Se chegou aqui, a resposta não tem a estrutura esperada
+                Log::warning('Resposta da API Omie para departamentos sem estrutura esperada', [
+                    'response_keys' => array_keys($data ?? []),
+                    'response' => $data
+                ]);
+                
                 return [
                     'success' => false,
-                    'message' => 'Erro da API: ' . ($data['faultstring'] ?? 'Erro desconhecido'),
+                    'message' => 'Resposta da API não contém dados de departamentos. Estrutura: ' . json_encode(array_keys($data ?? [])),
                     'data' => [],
                     'pagination' => ['current_page' => 1, 'total_pages' => 1, 'total' => 0]
                 ];
             }
             
+            // Se a resposta HTTP não foi bem-sucedida, tentar extrair erro do body
+            $errorMessage = 'Resposta inválida da API Omie (HTTP ' . $response->status() . ')';
+            
+            try {
+                $errorData = $response->json();
+                if (isset($errorData['faultstring'])) {
+                    $errorMessage = $errorData['faultstring'];
+                } elseif (isset($errorData['faultCode'])) {
+                    $errorMessage = $errorData['faultCode'];
+                }
+            } catch (\Exception $e) {
+                // Se não conseguir parsear JSON, usar o body como está
+                $body = $response->body();
+                if (!empty($body)) {
+                    $errorMessage = 'Erro da API: ' . $body;
+                }
+            }
+            
+            Log::error('Resposta HTTP inválida da API Omie para departamentos', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+                'error_message' => $errorMessage
+            ]);
+            
             return [
                 'success' => false,
-                'message' => 'Resposta inválida da API Omie',
+                'message' => $errorMessage,
                 'data' => [],
                 'pagination' => ['current_page' => 1, 'total_pages' => 1, 'total' => 0]
             ];
         } catch (\Exception $e) {
             Log::error('Erro ao listar departamentos Omie', [
                 'erro' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
             
             return [
