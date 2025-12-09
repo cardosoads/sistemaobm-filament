@@ -85,29 +85,35 @@ class ObmsTable
                         
                         // Para tipo prestador, buscar na tabela orcamento_prestador
                         if ($orcamento->tipo_orcamento === 'prestador') {
+                            // Carregar o relacionamento com eager loading
                             $prestador = $orcamento->prestadores()->with('fornecedor')->first();
                             if ($prestador) {
-                                // Tentar nome do fornecedor salvo diretamente primeiro
-                                if ($prestador->fornecedor_nome) {
+                                // Priorizar o nome salvo diretamente no campo fornecedor_nome
+                                if (!empty($prestador->fornecedor_nome)) {
                                     return $prestador->fornecedor_nome;
                                 }
-                                // Depois tentar pelo relacionamento
+                                // Fallback: buscar pelo relacionamento fornecedor
                                 if ($prestador->fornecedor) {
-                                    return $prestador->fornecedor->razao_social ?? $prestador->fornecedor->nome;
+                                    return $prestador->fornecedor->nome_fantasia 
+                                        ?? $prestador->fornecedor->razao_social 
+                                        ?? null;
                                 }
                             }
                         }
                         
                         // Para nova rota, verificar se incluir_fornecedor está marcado
                         if ($orcamento->tipo_orcamento === 'proprio_nova_rota') {
-                            $proprioNovaRota = $orcamento->propriosNovaRota()->first();
+                            $proprioNovaRota = $orcamento->propriosNovaRota()->with('fornecedor')->first();
                             if ($proprioNovaRota && $proprioNovaRota->incluir_fornecedor) {
-                                // Tentar buscar pelo nome salvo diretamente ou pelo relacionamento
-                                if ($proprioNovaRota->fornecedor_nome) {
+                                // Priorizar o nome salvo diretamente no campo fornecedor_nome
+                                if (!empty($proprioNovaRota->fornecedor_nome)) {
                                     return $proprioNovaRota->fornecedor_nome;
                                 }
+                                // Fallback: buscar pelo relacionamento fornecedor
                                 if ($proprioNovaRota->fornecedor) {
-                                    return $proprioNovaRota->fornecedor->razao_social ?? $proprioNovaRota->fornecedor->nome;
+                                    return $proprioNovaRota->fornecedor->nome_fantasia 
+                                        ?? $proprioNovaRota->fornecedor->razao_social 
+                                        ?? null;
                                 }
                             }
                         }
