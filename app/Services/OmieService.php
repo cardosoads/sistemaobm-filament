@@ -11,6 +11,7 @@ class OmieService
     protected string $baseUrl;
     protected string $appKey;
     protected string $appSecret;
+    protected bool $isConfigured = false;
 
     public function __construct()
     {
@@ -19,15 +20,37 @@ class OmieService
         $this->appSecret = (string) config('services.omie.app_secret', '');
 
         if (empty($this->appKey) || empty($this->appSecret)) {
-            throw new \Exception('OMIE_APP_KEY and OMIE_APP_SECRET must be set in the environment.');
+            Log::warning('OmieService: OMIE_APP_KEY e/ou OMIE_APP_SECRET não estão configurados. Funcionalidades de sincronização com Omie estarão desabilitadas.');
+            $this->isConfigured = false;
+        } else {
+            $this->isConfigured = true;
+        }
+    }
+
+    /**
+     * Verifica se o serviço está configurado corretamente
+     */
+    public function isConfigured(): bool
+    {
+        return $this->isConfigured;
+    }
+
+    /**
+     * Valida se o serviço está configurado antes de fazer operações
+     */
+    protected function ensureConfigured(): void
+    {
+        if (!$this->isConfigured) {
+            throw new \Exception('OmieService não está configurado. Verifique se OMIE_APP_KEY e OMIE_APP_SECRET estão definidos no arquivo .env');
         }
     }
 
     public function buscarCliente(int $clienteId): ?array
     {
         try {
+            $this->ensureConfigured();
             $cacheKey = "omie_cliente_{$clienteId}";
-            
+
             return Cache::remember($cacheKey, 3600, function () use ($clienteId) {
                 $response = Http::timeout(30)->post($this->baseUrl . '/geral/clientes/', [
                     'call' => 'ConsultarCliente',
@@ -40,7 +63,7 @@ class OmieService
 
                 if ($response->successful()) {
                     $data = $response->json();
-                    
+
                     if (isset($data['codigo_status']) && $data['codigo_status'] === '0') {
                         return [
                             'id' => $data['codigo_cliente_omie'] ?? $clienteId,
@@ -59,7 +82,7 @@ class OmieService
                         ];
                     }
                 }
-                
+
                 return null;
             });
         } catch (\Exception $e) {
@@ -67,7 +90,7 @@ class OmieService
                 'cliente_id' => $clienteId,
                 'erro' => $e->getMessage(),
             ]);
-            
+
             return null;
         }
     }
@@ -75,8 +98,9 @@ class OmieService
     public function buscarFornecedor(int $fornecedorId): ?array
     {
         try {
+            $this->ensureConfigured();
             $cacheKey = "omie_fornecedor_{$fornecedorId}";
-            
+
             return Cache::remember($cacheKey, 3600, function () use ($fornecedorId) {
                 $response = Http::timeout(30)->post($this->baseUrl . '/geral/fornecedores/', [
                     'call' => 'ConsultarFornecedor',
@@ -89,7 +113,7 @@ class OmieService
 
                 if ($response->successful()) {
                     $data = $response->json();
-                    
+
                     if (isset($data['codigo_status']) && $data['codigo_status'] === '0') {
                         return [
                             'id' => $data['codigo_fornecedor'] ?? $fornecedorId,
@@ -108,7 +132,7 @@ class OmieService
                         ];
                     }
                 }
-                
+
                 return null;
             });
         } catch (\Exception $e) {
@@ -116,7 +140,7 @@ class OmieService
                 'fornecedor_id' => $fornecedorId,
                 'erro' => $e->getMessage(),
             ]);
-            
+
             return null;
         }
     }
@@ -124,6 +148,7 @@ class OmieService
     public function listarClientes(int $pagina = 1, int $registrosPorPagina = 50): array
     {
         try {
+            $this->ensureConfigured();
             $response = Http::timeout(30)->post($this->baseUrl . '/geral/clientes/', [
                 'call' => 'ListarClientes',
                 'app_key' => $this->appKey,
@@ -137,7 +162,7 @@ class OmieService
 
             if ($response->successful()) {
                 $data = $response->json();
-                
+
                 // Verificar se há erro na resposta
                 if (isset($data['faultstring']) || isset($data['faultCode'])) {
                     Log::error('Erro na resposta da API Omie para clientes', [
@@ -145,7 +170,7 @@ class OmieService
                         'faultCode' => $data['faultCode'] ?? null,
                         'response' => $data
                     ]);
-                    
+
                     return [
                         'success' => false,
                         'message' => 'Erro da API: ' . ($data['faultstring'] ?? $data['faultCode'] ?? 'Erro desconhecido'),
@@ -153,7 +178,7 @@ class OmieService
                         'pagination' => ['current_page' => 1, 'total_pages' => 1, 'total' => 0]
                     ];
                 }
-                
+
                 // Verificar se há dados de clientes
                 if (isset($data['clientes_cadastro']) && is_array($data['clientes_cadastro'])) {
                     return [
@@ -166,13 +191,13 @@ class OmieService
                         ]
                     ];
                 }
-                
+
                 // Se chegou aqui, a resposta não tem a estrutura esperada
                 Log::warning('Resposta da API Omie para clientes sem estrutura esperada', [
                     'response_keys' => array_keys($data ?? []),
                     'response' => $data
                 ]);
-                
+
                 return [
                     'success' => false,
                     'message' => 'Resposta da API não contém dados de clientes. Estrutura: ' . json_encode(array_keys($data ?? [])),
@@ -180,10 +205,10 @@ class OmieService
                     'pagination' => ['current_page' => 1, 'total_pages' => 1, 'total' => 0]
                 ];
             }
-            
+
             // Se a resposta HTTP não foi bem-sucedida, tentar extrair erro do body
             $errorMessage = 'Resposta inválida da API Omie (HTTP ' . $response->status() . ')';
-            
+
             try {
                 $errorData = $response->json();
                 if (isset($errorData['faultstring'])) {
@@ -198,13 +223,13 @@ class OmieService
                     $errorMessage = 'Erro da API: ' . $body;
                 }
             }
-            
+
             Log::error('Resposta HTTP inválida da API Omie para clientes', [
                 'status' => $response->status(),
                 'body' => $response->body(),
                 'error_message' => $errorMessage
             ]);
-            
+
             return [
                 'success' => false,
                 'message' => $errorMessage,
@@ -215,7 +240,7 @@ class OmieService
             Log::error('Erro ao listar clientes Omie', [
                 'erro' => $e->getMessage(),
             ]);
-            
+
             return [
                 'success' => false,
                 'message' => $e->getMessage(),
@@ -228,6 +253,7 @@ class OmieService
     public function listarFornecedores(int $pagina = 1, int $registrosPorPagina = 50): array
     {
         try {
+            $this->ensureConfigured();
             $response = Http::timeout(30)->post($this->baseUrl . '/geral/fornecedores/', [
                 'call' => 'ListarFornecedores',
                 'app_key' => $this->appKey,
@@ -241,7 +267,7 @@ class OmieService
 
             if ($response->successful()) {
                 $data = $response->json();
-                
+
                 // Verificar se há erro na resposta
                 if (isset($data['faultstring']) || isset($data['faultCode'])) {
                     Log::error('Erro na resposta da API Omie para fornecedores', [
@@ -249,7 +275,7 @@ class OmieService
                         'faultCode' => $data['faultCode'] ?? null,
                         'response' => $data
                     ]);
-                    
+
                     return [
                         'success' => false,
                         'message' => 'Erro da API: ' . ($data['faultstring'] ?? $data['faultCode'] ?? 'Erro desconhecido'),
@@ -257,7 +283,7 @@ class OmieService
                         'pagination' => ['current_page' => 1, 'total_pages' => 1, 'total' => 0]
                     ];
                 }
-                
+
                 // Verificar se há dados de fornecedores
                 if (isset($data['cadastros']) && is_array($data['cadastros'])) {
                     return [
@@ -270,13 +296,13 @@ class OmieService
                         ]
                     ];
                 }
-                
+
                 // Se chegou aqui, a resposta não tem a estrutura esperada
                 Log::warning('Resposta da API Omie para fornecedores sem estrutura esperada', [
                     'response_keys' => array_keys($data ?? []),
                     'response' => $data
                 ]);
-                
+
                 return [
                     'success' => false,
                     'message' => 'Resposta da API não contém dados de fornecedores. Estrutura: ' . json_encode(array_keys($data ?? [])),
@@ -284,10 +310,10 @@ class OmieService
                     'pagination' => ['current_page' => 1, 'total_pages' => 1, 'total' => 0]
                 ];
             }
-            
+
             // Se a resposta HTTP não foi bem-sucedida, tentar extrair erro do body
             $errorMessage = 'Resposta inválida da API Omie (HTTP ' . $response->status() . ')';
-            
+
             try {
                 $errorData = $response->json();
                 if (isset($errorData['faultstring'])) {
@@ -302,13 +328,13 @@ class OmieService
                     $errorMessage = 'Erro da API: ' . $body;
                 }
             }
-            
+
             Log::error('Resposta HTTP inválida da API Omie para fornecedores', [
                 'status' => $response->status(),
                 'body' => $response->body(),
                 'error_message' => $errorMessage
             ]);
-            
+
             return [
                 'success' => false,
                 'message' => $errorMessage,
@@ -319,7 +345,7 @@ class OmieService
             Log::error('Erro ao listar fornecedores Omie', [
                 'erro' => $e->getMessage(),
             ]);
-            
+
             return [
                 'success' => false,
                 'message' => $e->getMessage(),
@@ -332,6 +358,7 @@ class OmieService
     public function testarConexao(): bool
     {
         try {
+            $this->ensureConfigured();
             $response = Http::timeout(10)->post($this->baseUrl . '/geral/clientes/', [
                 'call' => 'ListarClientes',
                 'app_key' => $this->appKey,
@@ -347,7 +374,7 @@ class OmieService
             Log::error('Erro ao testar conexão com Omie', [
                 'erro' => $e->getMessage(),
             ]);
-            
+
             return false;
         }
     }
@@ -356,6 +383,7 @@ class OmieService
     public function testConnection(): array
     {
         try {
+            $this->ensureConfigured();
             $response = Http::timeout(10)->post($this->baseUrl . '/geral/clientes/', [
                 'call' => 'ListarClientes',
                 'app_key' => $this->appKey,
@@ -368,7 +396,7 @@ class OmieService
 
             if ($response->successful()) {
                 $data = $response->json();
-                
+
                 // Se há dados de clientes ou se não há erro, considera sucesso
                 if (isset($data['clientes_cadastro']) || !isset($data['faultstring'])) {
                     return [
@@ -376,7 +404,7 @@ class OmieService
                         'message' => 'Conexão estabelecida com sucesso'
                     ];
                 }
-                
+
                 return [
                     'success' => false,
                     'message' => 'Erro da API: ' . ($data['faultstring'] ?? 'Erro desconhecido')
@@ -391,7 +419,7 @@ class OmieService
             Log::error('Erro ao testar conexão com Omie', [
                 'erro' => $e->getMessage(),
             ]);
-            
+
             return [
                 'success' => false,
                 'message' => $e->getMessage()
@@ -413,6 +441,7 @@ class OmieService
     public function listDepartments(int $page = 1, int $perPage = 50, array $filters = []): array
     {
         try {
+            $this->ensureConfigured();
             $response = Http::timeout(30)->post($this->baseUrl . '/geral/departamentos/', [
                 'call' => 'ListarDepartamentos',
                 'app_key' => $this->appKey,
@@ -425,7 +454,7 @@ class OmieService
 
             if ($response->successful()) {
                 $data = $response->json();
-                
+
                 // Verificar se há erro na resposta
                 if (isset($data['faultstring']) || isset($data['faultCode'])) {
                     Log::error('Erro na resposta da API Omie para departamentos', [
@@ -433,7 +462,7 @@ class OmieService
                         'faultCode' => $data['faultCode'] ?? null,
                         'response' => $data
                     ]);
-                    
+
                     return [
                         'success' => false,
                         'message' => 'Erro da API: ' . ($data['faultstring'] ?? $data['faultCode'] ?? 'Erro desconhecido'),
@@ -441,7 +470,7 @@ class OmieService
                         'pagination' => ['current_page' => 1, 'total_pages' => 1, 'total' => 0]
                     ];
                 }
-                
+
                 // Verificar se há dados de departamentos
                 if (isset($data['departamentos']) && is_array($data['departamentos'])) {
                     return [
@@ -463,13 +492,13 @@ class OmieService
                         ]
                     ];
                 }
-                
+
                 // Se chegou aqui, a resposta não tem a estrutura esperada
                 Log::warning('Resposta da API Omie para departamentos sem estrutura esperada', [
                     'response_keys' => array_keys($data ?? []),
                     'response' => $data
                 ]);
-                
+
                 return [
                     'success' => false,
                     'message' => 'Resposta da API não contém dados de departamentos. Estrutura: ' . json_encode(array_keys($data ?? [])),
@@ -477,10 +506,10 @@ class OmieService
                     'pagination' => ['current_page' => 1, 'total_pages' => 1, 'total' => 0]
                 ];
             }
-            
+
             // Se a resposta HTTP não foi bem-sucedida, tentar extrair erro do body
             $errorMessage = 'Resposta inválida da API Omie (HTTP ' . $response->status() . ')';
-            
+
             try {
                 $errorData = $response->json();
                 if (isset($errorData['faultstring'])) {
@@ -495,13 +524,13 @@ class OmieService
                     $errorMessage = 'Erro da API: ' . $body;
                 }
             }
-            
+
             Log::error('Resposta HTTP inválida da API Omie para departamentos', [
                 'status' => $response->status(),
                 'body' => $response->body(),
                 'error_message' => $errorMessage
             ]);
-            
+
             return [
                 'success' => false,
                 'message' => $errorMessage,
@@ -513,7 +542,7 @@ class OmieService
                 'erro' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return [
                 'success' => false,
                 'message' => $e->getMessage(),
