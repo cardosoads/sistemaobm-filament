@@ -13,13 +13,11 @@ class GrupoImposto extends Model
     
     protected $fillable = [
         'nome',
-        'percentual',
         'descricao',
         'ativo',
     ];
 
     protected $casts = [
-        'percentual' => 'decimal:2',
         'ativo' => 'boolean',
     ];
 

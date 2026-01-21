@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\GrupoImposto;
 
 class RecursoHumano extends Model
 {
@@ -35,6 +36,7 @@ class RecursoHumano extends Model
         'custo_total_mao_obra',
         'percentual_encargos',
         'percentual_beneficios',
+        'grupo_imposto_id',
         'active',
     ];
 
@@ -64,6 +66,14 @@ class RecursoHumano extends Model
     public function base(): BelongsTo
     {
         return $this->belongsTo(Base::class);
+    }
+
+    /**
+     * Relacionamento com GrupoImposto
+     */
+    public function grupoImposto(): BelongsTo
+    {
+        return $this->belongsTo(GrupoImposto::class);
     }
 
     /**
